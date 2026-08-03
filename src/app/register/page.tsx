@@ -13,14 +13,14 @@ export default function RegisterPage() {
   const [emailError] = useState(true) // Simulating "Email already exists" error
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full overflow-x-hidden">
       {/* Left Panel - Branding */}
       <LeftPanel variant="light" />
 
       {/* Right Panel - Registration Form */}
-      <div className="flex w-full lg:w-1/2 flex-col bg-white px-6 py-8 sm:px-12">
+      <div className="flex w-full min-w-0 flex-col bg-white px-4 py-8 sm:px-8 lg:w-1/2 lg:px-12">
         {/* Top bar */}
-        <div className="flex w-full max-w-md mx-auto items-center justify-between">
+        <div className="mx-auto flex w-full max-w-md flex-wrap items-center justify-between gap-2">
           <BackButton />
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">Already have an account?</span>

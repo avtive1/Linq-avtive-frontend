@@ -4,7 +4,12 @@ const nextConfig: NextConfig = {
   webpack(config) {
     // Grab the existing rule that handles SVGs
     const fileLoaderRule = config.module.rules.find(
-      (rule: any) => rule.test?.test?.(".svg")
+      (rule: any): rule is { test?: { test?: (value: string) => boolean }; exclude?: RegExp } =>
+        typeof rule === "object" &&
+        rule !== null &&
+        "test" in rule &&
+        typeof (rule as { test?: { test?: (value: string) => boolean } }).test?.test === "function" &&
+        (rule as { test?: { test?: (value: string) => boolean } }).test?.test?.(".svg") === true
     );
 
     // Prevent Next from treating SVGs as static assets

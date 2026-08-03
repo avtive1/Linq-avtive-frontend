@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1780997836.1691518,
-    "ast_hash": "93118abff19053755f7c8312ba44f2b8",
+    "mtime": 1781001738.1489782,
+    "ast_hash": "0ce125da23dfab8949d46d6dd71dfdd9",
     "semantic_hash": ""
   },
   "postcss.config.mjs": {
@@ -80,8 +80,8 @@
     "semantic_hash": ""
   },
   "src/app/dashboard/page.tsx": {
-    "mtime": 1781001534.715151,
-    "ast_hash": "f7e75f13e9c166e752b4daa58c25c790",
+    "mtime": 1782202010.608237,
+    "ast_hash": "30eb1d8c498ab493bf1a5da56620fde2",
     "semantic_hash": ""
   },
   "src/app/get-started/add-details/page.tsx": {
@@ -120,8 +120,8 @@
     "semantic_hash": ""
   },
   "src/app/layout.tsx": {
-    "mtime": 1780997836.185428,
-    "ast_hash": "7c7cd9fbb01d25f6a81bf2a01c1b3d15",
+    "mtime": 1781002875.8991437,
+    "ast_hash": "29e6e88c200cfc05f24f9ff9e9be3408",
     "semantic_hash": ""
   },
   "src/app/leads-follow-up/page.tsx": {
@@ -175,48 +175,48 @@
     "semantic_hash": ""
   },
   "src/app/settings/company/contact/page.tsx": {
-    "mtime": 1780997836.185428,
-    "ast_hash": "4f8c241e569914dca919da1334eeebe1",
+    "mtime": 1782205601.663112,
+    "ast_hash": "f94a71976497d760e519b2503f7d2ac1",
     "semantic_hash": ""
   },
   "src/app/settings/company/page.tsx": {
-    "mtime": 1780997836.185428,
-    "ast_hash": "eff3a2da778c50e1aa8c519c3e5b7430",
+    "mtime": 1782205461.331605,
+    "ast_hash": "f8864d43c1b507e316a9c319fe754b99",
     "semantic_hash": ""
   },
   "src/app/settings/company/social/page.tsx": {
-    "mtime": 1780997836.185428,
-    "ast_hash": "11ee96c011b57b716ace5414dc830529",
+    "mtime": 1782205610.5970607,
+    "ast_hash": "77980a78a3e1ab9f906f640aa14c8420",
     "semantic_hash": ""
   },
   "src/app/settings/contact-information/page.tsx": {
-    "mtime": 1780997836.185428,
-    "ast_hash": "08d36df0c39aa212cbb2b27c5cb4e036",
+    "mtime": 1782205552.5201795,
+    "ast_hash": "c7f857bbc65348eb6d7b97cc2c3ab8fb",
     "semantic_hash": ""
   },
   "src/app/settings/expertise-skills/page.tsx": {
-    "mtime": 1780997836.185428,
-    "ast_hash": "e4d29bf232b4d805f01c185562928752",
+    "mtime": 1782205587.176827,
+    "ast_hash": "8d695c2ee052fb894dced8bec49f74e2",
     "semantic_hash": ""
   },
   "src/app/settings/page.tsx": {
-    "mtime": 1780997836.185428,
-    "ast_hash": "d77de05e38d8c07a0985342e0e164ed3",
+    "mtime": 1782205321.933836,
+    "ast_hash": "abc2d5d9c305fa42042afc7c0ae163a0",
     "semantic_hash": ""
   },
   "src/app/settings/profile/page.tsx": {
-    "mtime": 1780997836.185428,
-    "ast_hash": "b34d75b8179bdd644fdffae2e5e24dcf",
+    "mtime": 1782205344.9908383,
+    "ast_hash": "f9101d81e0ef4abde088b9538f05ea1f",
     "semantic_hash": ""
   },
   "src/app/settings/social-links/page.tsx": {
-    "mtime": 1780997836.185428,
-    "ast_hash": "35da457c186cf3fa521fc14d06d35a59",
+    "mtime": 1782205575.7001767,
+    "ast_hash": "4267e5b89b583f47c8b5a0207bd2ce87",
     "semantic_hash": ""
   },
   "src/app/settings/v-card/page.tsx": {
-    "mtime": 1780997836.185428,
-    "ast_hash": "4f7246e6deda821ac2e4a2defe3741cf",
+    "mtime": 1782205422.0217187,
+    "ast_hash": "938de0a6275ff09a7a75041d2712d261",
     "semantic_hash": ""
   },
   "src/app/sharing/create-badge/page.tsx": {
@@ -290,33 +290,33 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/ConnectionHistoryWidget.tsx": {
-    "mtime": 1781001526.8376236,
-    "ast_hash": "8808d1c202d2ca59373da4b2aa24ef7c",
+    "mtime": 1782202043.8121622,
+    "ast_hash": "16feb0eb2fb5b4c210c55aa26a1b3edb",
     "semantic_hash": ""
   },
   "src/components/dashboard/DashboardHeader.tsx": {
-    "mtime": 1781001539.3340323,
-    "ast_hash": "8b867374a3c6f369f39c782dd1dbb88e",
+    "mtime": 1782202034.8238683,
+    "ast_hash": "c4d7ac7ee517fce0dcd09fe4731b05c5",
     "semantic_hash": ""
   },
   "src/components/dashboard/DashboardSidebar.tsx": {
-    "mtime": 1781001540.3817065,
-    "ast_hash": "0107f26df84fe7d6c93a9a526b5659bd",
+    "mtime": 1782202048.7575426,
+    "ast_hash": "25042fb1f8b8da6b2a243951c196f1a5",
     "semantic_hash": ""
   },
   "src/components/dashboard/FeatureGrid.tsx": {
-    "mtime": 1781001530.2269037,
-    "ast_hash": "2ed4d1716e7822226fb6b160b1c5e7aa",
+    "mtime": 1782202036.1064875,
+    "ast_hash": "e2296f6eee4af5bb211fccd1076412c9",
     "semantic_hash": ""
   },
   "src/components/dashboard/MyCardsWidget.tsx": {
-    "mtime": 1781001505.370545,
-    "ast_hash": "0dca56a6738c6321d6e416c1187eaffc",
+    "mtime": 1782204893.775625,
+    "ast_hash": "0526c80cf8501006a6e8faab16aea166",
     "semantic_hash": ""
   },
   "src/components/dashboard/VCardWidget.tsx": {
-    "mtime": 1781001511.947611,
-    "ast_hash": "f1606af208ccaa08014dbcb686704905",
+    "mtime": 1782202038.706881,
+    "ast_hash": "d6579c4a34036f2b91804a8d39dbe7da",
     "semantic_hash": ""
   },
   "src/components/dashboard/index.ts": {
@@ -502,6 +502,16 @@
   "src/assets/white-cloud 1.svg": {
     "mtime": 1780997836.2335699,
     "ast_hash": "673bbb9214c85a4d6393aade17d652ff",
+    "semantic_hash": ""
+  },
+  "src/components/layout/ResponsiveAppShell.tsx": {
+    "mtime": 1782205244.305484,
+    "ast_hash": "e995dc1fb6fd8d0e2c068de3bd8f0bb4",
+    "semantic_hash": ""
+  },
+  "src/components/layout/settingsTopTabs.tsx": {
+    "mtime": 1782205301.14863,
+    "ast_hash": "9200e4f2bf2240aea086f9967fb2ba2d",
     "semantic_hash": ""
   }
 }

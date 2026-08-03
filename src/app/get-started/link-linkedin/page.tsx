@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button"
 
 export default function LinkLinkedInPage() {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-black/40 p-4">
+    <div className="flex min-h-screen w-full items-center justify-center overflow-x-hidden bg-black/40 p-3 sm:p-4">
       {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+      <div className="relative w-full max-w-md min-w-0 rounded-2xl bg-white p-5 shadow-xl sm:p-8">
         {/* Close button */}
         <button className="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
           <X className="size-5" />

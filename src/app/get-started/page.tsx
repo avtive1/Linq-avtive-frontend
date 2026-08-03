@@ -9,7 +9,7 @@ export default function GetStartedPage() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-[#F9FAFB]">
       {/* Top bar */}
-      <div className="flex w-full items-center justify-between px-8 py-4">
+      <div className="flex w-full items-center justify-between px-4 py-4 sm:px-8">
         <BackButton />
         <button className="text-gray-400 hover:text-gray-600">
           <X className="size-5" />
@@ -17,38 +17,39 @@ export default function GetStartedPage() {
       </div>
 
       {/* Progress Steps */}
-      <div className="flex w-full items-center justify-center gap-6 px-8 py-4">
-        <div className="flex items-center gap-2">
+      <div className="w-full overflow-x-auto px-4 py-4 sm:px-8">
+        <div className="mx-auto flex min-w-max items-center justify-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <div className="flex size-8 items-center justify-center rounded-full bg-[#4361ee] text-sm font-semibold text-white">
             1
           </div>
           <span className="text-sm font-semibold text-gray-800">Get Started</span>
         </div>
         <div className="h-px w-8 bg-gray-200" />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <div className="flex size-8 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-400">
             2
           </div>
           <span className="text-sm text-gray-400">Pick Your Style</span>
         </div>
         <div className="h-px w-8 bg-gray-200" />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <div className="flex size-8 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-400">
             3
           </div>
           <span className="text-sm text-gray-400">Add Details</span>
         </div>
         <div className="h-px w-8 bg-gray-200" />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <div className="flex size-8 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-400">
             4
           </div>
           <span className="text-sm text-gray-400">Get Your Digital Card</span>
         </div>
-      </div>
+      </div></div>
 
       {/* Center content */}
-      <div className="flex flex-1 items-center justify-center px-8">
+      <div className="flex flex-1 items-center justify-center px-4 sm:px-8">
         <div className="flex w-full max-w-lg flex-col items-center gap-8">
           {/* Welcome */}
           <div className="flex flex-col items-center gap-2 text-center">
@@ -61,7 +62,7 @@ export default function GetStartedPage() {
           </div>
 
           {/* Import options - two cards side by side */}
-          <div className="flex w-full gap-4">
+          <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_1fr]">
             {/* Upload Resume Card */}
             <div className="flex flex-1 flex-col items-center gap-3 rounded-xl border border-gray-200 bg-white p-6">
               <div className="flex size-12 items-center justify-center rounded-full bg-gray-100">
@@ -77,7 +78,7 @@ export default function GetStartedPage() {
               </a>
             </div>
 
-            <Separator orientation="vertical" className="h-auto" />
+            <Separator orientation="vertical" className="hidden h-auto sm:block" />
 
             {/* LinkedIn Card */}
             <div className="flex flex-1 flex-col items-center gap-3 rounded-xl border border-gray-200 bg-white p-6">
@@ -107,7 +108,7 @@ export default function GetStartedPage() {
       </div>
 
       {/* Bottom bar */}
-      <div className="flex w-full items-center justify-end px-8 py-4">
+      <div className="flex w-full items-center justify-end px-4 py-4 sm:px-8">
         <LanguageSelector />
       </div>
     </div>

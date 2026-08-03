@@ -10,7 +10,7 @@ export default function AddDetailsPage() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-[#F9FAFB]">
       {/* Top bar */}
-      <div className="flex w-full items-center justify-between px-8 py-4">
+      <div className="flex w-full items-center justify-between px-4 py-4 sm:px-8">
         <BackButton />
         <button className="text-gray-400 hover:text-gray-600">
           <X className="size-5" />
@@ -18,14 +18,15 @@ export default function AddDetailsPage() {
       </div>
 
       {/* Progress Steps */}
-      <div className="flex w-full items-center justify-center gap-6 px-8 py-4">
+      <div className="w-full overflow-x-auto px-4 py-4 sm:px-8">
+        <div className="mx-auto flex min-w-max items-center justify-center gap-6">
         {[
           { num: 1, label: "Get Started", done: true },
           { num: 2, label: "Pick Your Style", done: true },
           { num: 3, label: "Add Details", done: false, active: true },
           { num: 4, label: "Get Your Digital Card", done: false },
         ].map((step, i) => (
-          <div key={step.num} className="flex items-center gap-2">
+          <div key={step.num} className="flex items-center gap-2 whitespace-nowrap">
             {i > 0 && <div className="h-px w-8 bg-gray-200" />}
             <div className="flex items-center gap-2">
               <div
@@ -49,10 +50,10 @@ export default function AddDetailsPage() {
             </div>
           </div>
         ))}
-      </div>
+      </div></div>
 
       {/* Main content: form + preview */}
-      <div className="flex flex-1 items-start justify-center gap-12 px-8 py-6">
+      <div className="grid flex-1 grid-cols-1 items-start justify-center gap-8 px-4 py-6 sm:px-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-12">
         {/* Left - Form */}
         <div className="flex w-full max-w-sm flex-col gap-6">
           <div className="flex flex-col gap-2">
@@ -101,7 +102,7 @@ export default function AddDetailsPage() {
 
         {/* Right - Card Preview (phone mockup) */}
         <div className="flex flex-col items-center gap-3">
-          <div className="w-[280px] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-lg">
+          <div className="w-full max-w-[280px] overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-lg">
             {/* Profile section */}
             <div className="relative flex flex-col items-center bg-gradient-to-br from-[#4361ee] to-[#7c3aed] px-6 pb-8 pt-10">
               <PersonPhoto className="mb-3 size-20 rounded-full border-4 border-white/30" />
@@ -155,7 +156,7 @@ export default function AddDetailsPage() {
       </div>
 
       {/* Bottom bar */}
-      <div className="flex w-full items-center justify-end px-8 py-4">
+      <div className="flex w-full items-center justify-end px-4 py-4 sm:px-8">
         <LanguageSelector />
       </div>
     </div>

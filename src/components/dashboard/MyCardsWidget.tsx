@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button"
 
 export function MyCardsWidget() {
   return (
-    <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="min-w-0 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <CreditCard className="size-4 text-gray-400" />
           <h3 className="text-sm font-semibold text-gray-800">My Cards</h3>
         </div>
         <Button
           size="sm"
-          className="h-7 rounded-md bg-[#4361ee] px-3 text-[11px] font-medium text-white hover:bg-[#3a56d4]"
+          className="h-7 w-full rounded-md bg-[#4361ee] px-3 text-[11px] font-medium text-white hover:bg-[#3a56d4] sm:w-auto"
         >
           + Upgrade
         </Button>
@@ -46,7 +46,7 @@ export function MyCardsWidget() {
         ))}
       </div>
 
-      <div className="mt-4 flex items-center gap-3 border-t border-gray-50 pt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-gray-50 pt-4 sm:flex-nowrap">
         <div className="relative flex size-14 items-center justify-center">
           <svg className="size-14 -rotate-90" viewBox="0 0 36 36" aria-hidden>
             <circle cx="18" cy="18" r="15.5" fill="none" stroke="#E5E7EB" strokeWidth="2.5" />
@@ -64,15 +64,15 @@ export function MyCardsWidget() {
           </svg>
           <span className="absolute text-[10px] font-bold text-gray-800">20</span>
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-xs text-gray-500">Connection</p>
-          <p className="text-sm font-semibold text-gray-800">
+          <p className="truncate text-sm font-semibold text-gray-800">
             20 <span className="text-xs font-normal text-gray-400">/ week</span>
           </p>
         </div>
         <button
           type="button"
-          className="ml-auto flex size-8 items-center justify-center rounded-full border border-gray-100 text-gray-400 hover:bg-gray-50"
+          className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-full border border-gray-100 text-gray-400 hover:bg-gray-50"
           aria-label="View connections"
         >
           <ArrowRight className="size-4" />

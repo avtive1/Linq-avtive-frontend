@@ -35,7 +35,7 @@ const days = [
 
 export function ConnectionHistoryWidget() {
   return (
-    <div className="flex h-full flex-col rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="flex min-w-0 flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5 lg:min-h-0 lg:h-full">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-800">Connection History</h3>
         <a href="#" className="text-xs font-medium text-[#4361ee] hover:underline">
@@ -80,15 +80,15 @@ export function ConnectionHistoryWidget() {
         ))}
       </div>
 
-      <div className="mb-4 flex gap-4 border-b border-gray-100 text-xs">
-        <span className="border-b-2 border-[#4361ee] pb-2 font-semibold text-[#4361ee]">
+      <div className="mb-4 flex gap-4 overflow-x-auto border-b border-gray-100 text-xs">
+        <span className="shrink-0 border-b-2 border-[#4361ee] pb-2 font-semibold text-[#4361ee]">
           History
         </span>
-        <span className="pb-2 text-gray-400">Status</span>
-        <span className="pb-2 text-gray-400">Follow-up</span>
+        <span className="shrink-0 pb-2 text-gray-400">Status</span>
+        <span className="shrink-0 pb-2 text-gray-400">Follow-up</span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 overflow-auto">
+      <div className="flex flex-col gap-3 lg:flex-1 lg:overflow-auto">
         {meetings.map((m) => (
           <div
             key={m.name}

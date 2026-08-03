@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button"
 
 export default function UploadResumeCompletePage() {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-black/40 p-4">
+    <div className="flex min-h-screen w-full items-center justify-center overflow-x-hidden bg-black/40 p-3 sm:p-4">
       {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+      <div className="relative w-full max-w-md min-w-0 rounded-2xl bg-white p-5 shadow-xl sm:p-8">
         {/* Close button */}
         <button className="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
           <X className="size-5" />
@@ -26,7 +26,7 @@ export default function UploadResumeCompletePage() {
           </div>
 
           {/* Uploaded file card */}
-          <div className="flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-white p-3">
+          <div className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-gray-200 bg-white p-3">
             {/* PDF icon */}
             <div className="flex size-10 items-center justify-center rounded-lg bg-red-50">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -34,7 +34,7 @@ export default function UploadResumeCompletePage() {
                 <text x="12" y="15" textAnchor="middle" fill="white" fontSize="7" fontWeight="bold">PDF</text>
               </svg>
             </div>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-gray-800">my-cv.pdf</p>
               <p className="text-xs text-gray-400">60 KB of 120 KB</p>
             </div>

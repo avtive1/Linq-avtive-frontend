@@ -1,8 +1,7 @@
 "use client"
 
-import { Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { BackButton, AvtiveLogo } from "@/components/avtive"
+import { AvtiveLogo } from "@/components/avtive"
 
 export default function WelcomePage() {
   return (
@@ -13,7 +12,7 @@ export default function WelcomePage() {
    
 
       {/* Center content */}
-      <div className="flex flex-1 items-center justify-center px-8">
+      <div className="flex flex-1 items-center justify-center px-4 sm:px-8">
         <div className="flex flex-col items-center gap-6">
           {/* Avatar */}
           <div className="size-24 overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-blue-500 shadow-lg">
@@ -28,7 +27,7 @@ export default function WelcomePage() {
           <p className="text-sm text-gray-500">Redefining Networking</p>
 
           {/* Welcome message */}
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-center text-2xl font-bold text-gray-800 sm:text-3xl">
             Welcome to the Virtual World !
           </h1>
 
