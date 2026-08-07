@@ -1,5 +1,5 @@
 "use client"
-
+import { auth } from "@/lib/auth";
 import { useState } from "react"
 import { User, Mail, Lock, Eye, EyeOff } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -9,9 +9,39 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { BackButton, SocialLoginButtons, LeftPanel, LanguageSelector } from "@/components/avtive"
 
+
+
+
 export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [emailError] = useState(true) // Simulating "Incorrect Email" error
+const [showPassword, setShowPassword] = useState(false);
+
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState("");
+
+const handleLogin = async () => {
+  try {
+    setLoading(true);
+    setError("");
+
+    const result = await auth.signIn.email({
+      email,
+      password,
+    });
+
+    console.log(result);
+
+    window.location.href = "/dashboard";
+  } catch (err: any) {
+    console.error(err);
+    setError("Invalid email or password");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="flex min-h-screen w-full overflow-x-hidden">
@@ -76,8 +106,10 @@ export default function LoginPage() {
                     className="h-11 rounded-lg border-red-300 bg-gray-50/50 pl-10 text-sm focus:border-red-400 focus:ring-red-200"
                   />
                 </div>
-                {emailError && (
-                  <p className="text-xs font-medium text-red-500">Incorrect Email</p>
+                {error && (
+                  <p className="text-xs font-medium text-red-500">
+                        {error}
+                  </p>
                 )}
               </div>
 
@@ -129,8 +161,12 @@ export default function LoginPage() {
             </div>
 
             {/* Login Button */}
-            <Button className="h-12 w-full rounded-lg bg-[#4361ee] text-base font-semibold text-white hover:bg-[#3a56d4]">
-              Login
+            <Button
+                  onClick={handleLogin}
+                  disabled={loading}
+                className="h-12 w-full rounded-lg bg-[#4361ee] text-base font-semibold text-white hover:bg-[#3a56d4]"
+                >
+                {loading ? "Logging in..." : "Login"}
             </Button>
           </div>
         </div>

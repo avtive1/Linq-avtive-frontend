@@ -7,10 +7,54 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { BackButton, SocialLoginButtons, LeftPanel, LanguageSelector } from "@/components/avtive"
+import { auth } from "@/lib/auth";
+import { useRouter } from "next/navigation";
+
 
 export default function RegisterPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [emailError] = useState(true) // Simulating "Email already exists" error
+const [showPassword, setShowPassword] = useState(false);
+
+const [name, setName] = useState("");
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState("");
+
+const router = useRouter();
+
+const handleRegister = async () => {
+  if (!name.trim() || !email.trim() || !password.trim()) {
+    setError("Please fill all fields.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setError("");
+
+    console.log({
+      name,
+      email,
+      password,
+    });
+
+    const result = await auth.signUp.email({
+      name: name.trim(),
+      email: email.trim(),
+      password: password.trim(),
+    });
+
+    console.log("Signup Result:", result);
+
+    router.push("/dashboard");
+  } catch (err: any) {
+    console.error(err);
+    setError(err?.message || "Registration failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex min-h-screen w-full overflow-x-hidden">
@@ -69,11 +113,13 @@ export default function RegisterPage() {
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
                   <Input
-                    id="fullName"
-                    type="text"
-                    defaultValue="James Brown"
-                    className="h-11 rounded-lg border-gray-200 bg-gray-50/50 pl-10 text-sm focus:border-[#4361ee] focus:ring-[#4361ee]/20"
-                  />
+                      id="fullName"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Enter your full name"
+                      className="h-11 rounded-lg border-gray-200 bg-gray-50/50 pl-10 text-sm focus:border-[#4361ee] focus:ring-[#4361ee]/20"
+                    />
                 </div>
               </div>
 
@@ -87,12 +133,16 @@ export default function RegisterPage() {
                   <Input
                     id="email"
                     type="email"
-                    defaultValue="hello@allignui.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
                     className="h-11 rounded-lg border-red-300 bg-gray-50/50 pl-10 text-sm focus:border-red-400 focus:ring-red-200"
                   />
                 </div>
-                {emailError && (
-                  <p className="text-xs font-medium text-red-500">Email already exists</p>
+                {error && (
+                    <p className="text-xs font-medium text-red-500">
+                          {error}
+                    </p>
                 )}
               </div>
 
@@ -106,7 +156,9 @@ export default function RegisterPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    defaultValue="password123"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
                     className="h-11 rounded-lg border-gray-200 bg-gray-50/50 pl-10 pr-10 text-sm focus:border-[#4361ee] focus:ring-[#4361ee]/20"
                   />
                   <button
@@ -128,8 +180,12 @@ export default function RegisterPage() {
             </div>
 
             {/* Register Button */}
-            <Button className="h-12 w-full rounded-lg bg-[#4361ee] text-base font-semibold text-white hover:bg-[#3a56d4]">
-              Register
+            <Button
+               onClick={handleRegister}
+                disabled={loading}
+                className="h-12 w-full rounded-lg bg-[#4361ee] text-base font-semibold text-white hover:bg-[#3a56d4]"
+            >
+                {loading ? "Creating Account..." : "Register"}
             </Button>
           </div>
         </div>
