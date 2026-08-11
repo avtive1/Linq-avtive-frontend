@@ -1,3 +1,4 @@
+//the Dashboard indexer
 export { DashboardSidebar } from "./DashboardSidebar"
 export { DashboardHeader } from "./DashboardHeader"
 export { MyCardsWidget } from "./MyCardsWidget"
