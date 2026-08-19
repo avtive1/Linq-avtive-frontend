@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { BackButton, SocialLoginButtons, LeftPanel, LanguageSelector } from "@/components/avtive"
-import { auth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 
@@ -39,15 +39,20 @@ const handleRegister = async () => {
       password,
     });
 
-    const result = await auth.signUp.email({
-      name: name.trim(),
-      email: email.trim(),
-      password: password.trim(),
+    const supabase = createClient();
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
     });
 
-    console.log("Signup Result:", result);
+    if (error) {
+      setError(error.message || "Registration failed");
+      return;
+    }
 
-    router.push("/dashboard");
+    // Redirect to verify-email with email as query parameter
+    router.push(`/verify-email?email=${encodeURIComponent(email)}`);
   } catch (err: any) {
     console.error(err);
     setError(err?.message || "Registration failed");

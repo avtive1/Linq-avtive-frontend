@@ -1,9 +1,4 @@
-import { createAuthClient } from "@neondatabase/auth";
-import { BetterAuthReactAdapter } from "@neondatabase/auth/react/adapters";
+// Re-export client utilities for authentication
+export { createClient } from "@/lib/supabase/client";
 
-export const auth = createAuthClient(
-  process.env.NEXT_PUBLIC_NEON_AUTH_URL!,
-  {
-    adapter: BetterAuthReactAdapter(),
-  }
-);
+// For server-side auth operations, import directly from @/lib/supabase/server
