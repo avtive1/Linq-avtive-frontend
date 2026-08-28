@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { BackButton, SocialLoginButtons, LeftPanel, LanguageSelector } from "@/components/avtive"
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from '@supabase/supabase-js';
 import { useRouter } from "next/navigation";
 
 
@@ -24,7 +24,10 @@ const [error, setError] = useState("");
 const router = useRouter();
 
 const handleRegister = async () => {
-  if (!name.trim() || !email.trim() || !password.trim()) {
+  const trimmedName = name.trim();
+  const trimmedEmail = email.trim().toLowerCase();
+
+  if (!trimmedName || !trimmedEmail) {
     setError("Please fill all fields.");
     return;
   }
@@ -33,29 +36,27 @@ const handleRegister = async () => {
     setLoading(true);
     setError("");
 
-    console.log({
-      name,
-      email,
-      password,
-    });
+    const supabase = createClient('https://lmwnwinkjlyebtlgfwac.supabase.co', 'sb_publishable_h4Hh52S6-nZCwNiUsSC0Ng_iPqsolwF');
 
-    const supabase = createClient();
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email: trimmedEmail,
+      options: {
+      emailRedirectTo: `${window.location.origin}/auth/callback`,
+  },
     });
 
     if (error) {
-      setError(error.message || "Registration failed");
+      setError(error.message);
       return;
     }
 
-    // Redirect to verify-email with email as query parameter
-    router.push(`/verify-email?email=${encodeURIComponent(email)}`);
-  } catch (err: any) {
-    console.error(err);
-    setError(err?.message || "Registration failed");
+    router.push(`/verify-email?email=${encodeURIComponent(trimmedEmail)}`);
+  } catch (err: unknown) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Registration failed. Please try again."
+    );
   } finally {
     setLoading(false);
   }

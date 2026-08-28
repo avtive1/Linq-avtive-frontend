@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 
 export function SocialLoginButtons() {
-  const supabase = createClient()
 
   const handleGoogleLogin = async () => {
     try {
+      const supabase = createClient()
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {

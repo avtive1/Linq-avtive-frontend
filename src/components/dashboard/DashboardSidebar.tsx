@@ -72,7 +72,7 @@ function SidebarContent({
 
 
           <span className="truncate text-sm font-semibold text-gray-800">
-            {userName}'s Workspace
+            {`${userName}'s Workspace`}
           </span>
 
 

@@ -206,7 +206,7 @@ export default function LoginPage() {
                 </div>
 
                 <a
-                  href="#"
+                  href="/forgot-password"
                   className="text-sm font-medium text-[#4361ee] underline underline-offset-2 hover:text-[#3a56d4]"
                 >
                   Forgot password?

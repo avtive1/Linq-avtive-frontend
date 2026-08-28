@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { useRef, useState, Suspense } from "react"
 import { MailCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,25 +16,27 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  // Email signup ke baad URL se milegi
   const email = searchParams.get("email")
 
-  const [code, setCode] = useState(["", "", "", ""])
+  const [code, setCode] = useState(["", "", "", "", "", ""])
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
 
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+
   const handleChange = (index: number, value: string) => {
-    if (value.length > 1) return
+    const digit = value.replace(/\D/g, "").slice(-1)
 
     const newCode = [...code]
-    newCode[index] = value
+    newCode[index] = digit
     setCode(newCode)
 
-    // Auto-focus next input
-    if (value && index < 3) {
-      const nextInput = document.getElementById(`code-${index + 1}`)
-      nextInput?.focus()
+    setErrorMessage("")
+
+    if (digit && index < 5) {
+      inputRefs.current[index + 1]?.focus()
     }
   }
 
@@ -43,27 +45,55 @@ function VerifyEmailContent() {
     e: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
-      const prevInput = document.getElementById(`code-${index - 1}`)
-      prevInput?.focus()
+      const newCode = [...code]
+      newCode[index - 1] = ""
+      setCode(newCode)
+
+      inputRefs.current[index - 1]?.focus()
     }
+
+    if (e.key === "Enter") {
+      void handleVerify()
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+
+    const pastedData = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6)
+
+    if (!pastedData) return
+
+    const newCode = Array.from({ length: 6 }, (_, index) => {
+      return pastedData[index] || ""
+    })
+
+    setCode(newCode)
+    setErrorMessage("")
+
+    const lastIndex = Math.min(pastedData.length, 6) - 1
+    inputRefs.current[lastIndex]?.focus()
   }
 
   const handleVerify = async () => {
     const token = code.join("")
 
-    // Check OTP
-    if (token.length !== 4) {
-      setErrorMessage("Please enter the complete 4-digit code.")
+    if (token.length !== 6) {
+      setErrorMessage("Please enter the complete 6-digit code.")
       return
     }
 
     if (!email) {
-      setErrorMessage("Email address is missing.")
+      setErrorMessage("Email address is missing. Please sign up again.")
       return
     }
 
     setLoading(true)
     setErrorMessage("")
+    setSuccessMessage("")
 
     try {
       const { error } = await supabase.auth.verifyOtp({
@@ -77,10 +107,16 @@ function VerifyEmailContent() {
         return
       }
 
-      // Verification successful - redirect to dashboard
-      router.push("/dashboard")
-    } catch (err: any) {
-      setErrorMessage(err?.message || "Verification failed")
+      setSuccessMessage("Email verified successfully!")
+
+      setTimeout(() => {
+        router.push("/dashboard")
+        router.refresh()
+      }, 500)
+    } catch (err: unknown) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Verification failed."
+      )
     } finally {
       setLoading(false)
     }
@@ -88,17 +124,17 @@ function VerifyEmailContent() {
 
   const handleResend = async () => {
     if (!email) {
-      setErrorMessage("Email address is missing.")
+      setErrorMessage("Email address is missing. Please sign up again.")
       return
     }
 
+    setResending(true)
     setErrorMessage("")
     setSuccessMessage("")
 
     try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email,
+      const { error } = await supabase.auth.signInWithOtp({
+      email,
       })
 
       if (error) {
@@ -106,23 +142,28 @@ function VerifyEmailContent() {
         return
       }
 
-      setSuccessMessage("A new verification code has been sent to your email.")
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(""), 3000)
-    } catch (err: any) {
-      setErrorMessage(err?.message || "Failed to resend code")
+      setCode(["", "", "", "", "", ""])
+      inputRefs.current[0]?.focus()
+
+      setSuccessMessage(
+        "A new verification code has been sent to your email."
+      )
+    } catch (err: unknown) {
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Failed to resend verification code."
+      )
+    } finally {
+      setResending(false)
     }
   }
 
   return (
     <div className="flex min-h-screen w-full overflow-x-hidden">
-      {/* Left Panel */}
       <LeftPanel variant="light" />
 
-      {/* Right Panel */}
       <div className="flex w-full min-w-0 flex-col bg-white px-4 py-8 sm:px-8 lg:w-1/2 lg:px-12">
-
-        {/* Top bar */}
         <div className="mx-auto flex w-full max-w-md flex-wrap items-center justify-between gap-2">
           <BackButton />
 
@@ -140,89 +181,84 @@ function VerifyEmailContent() {
           </div>
         </div>
 
-        {/* Center content */}
         <div className="flex flex-1 items-center justify-center">
           <div className="flex w-full max-w-md flex-col items-center gap-6">
-
-            {/* Icon */}
             <div className="flex size-16 items-center justify-center rounded-full bg-gray-100">
               <MailCheck className="size-8 text-gray-400" />
             </div>
 
-            {/* Title */}
             <div className="flex flex-col items-center gap-1 text-center">
               <h1 className="text-2xl font-bold tracking-tight text-gray-800">
                 Enter Verification Code
               </h1>
 
               <p className="text-sm text-gray-500">
-                We've sent a code to{" "}
+                {"We've sent a code to "}
                 <span className="font-medium text-gray-700">
                   {email || "your email"}
                 </span>
               </p>
             </div>
 
-            {/* Code Input */}
             <div className="flex items-center gap-3">
               {code.map((digit, index) => (
                 <input
                   key={index}
-                  id={`code-${index}`}
+                  ref={(element) => {
+                    inputRefs.current[index] = element
+                  }}
                   type="text"
                   inputMode="numeric"
+                  autoComplete={index === 0 ? "one-time-code" : "off"}
                   maxLength={1}
                   value={digit}
+                  disabled={loading}
                   onChange={(e) =>
-                    handleChange(
-                      index,
-                      e.target.value.replace(/\D/g, "")
-                    )
+                    handleChange(index, e.target.value)
                   }
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="size-14 rounded-lg border border-gray-200 bg-gray-50/50 text-center text-xl font-semibold text-gray-800 outline-none focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20"
+                  onPaste={handlePaste}
+                  className="size-14 rounded-lg border border-gray-200 bg-gray-50/50 text-center text-xl font-semibold text-gray-800 outline-none focus:border-[#4361ee] focus:ring-2 focus:ring-[#4361ee]/20 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               ))}
             </div>
 
-            {/* Error / success message */}
             {errorMessage && (
-              <p className="text-sm text-red-500 text-center">
+              <p className="text-center text-sm text-red-500">
                 {errorMessage}
               </p>
             )}
 
             {successMessage && (
-              <p className="text-sm text-green-600 text-center">
+              <p className="text-center text-sm text-green-600">
                 {successMessage}
               </p>
             )}
 
-            {/* Submit Code */}
             <Button
+              type="button"
               onClick={handleVerify}
-              disabled={loading}
+              disabled={loading || resending}
               className="h-12 w-full rounded-lg bg-[#4361ee] text-base font-semibold text-white hover:bg-[#3a56d4]"
             >
               {loading ? "Verifying..." : "Submit Code"}
             </Button>
 
-            {/* Resend code */}
             <p className="text-sm text-gray-500">
               Experiencing issues receiving the code?{" "}
               <button
                 type="button"
                 onClick={handleResend}
-                className="font-medium text-[#4361ee] underline underline-offset-2 hover:text-[#3a56d4]"
+                disabled={loading || resending}
+                className="font-medium text-[#4361ee] underline underline-offset-2 hover:text-[#3a56d4] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Resend code
+                {resending ? "Sending..." : "Resend code"}
               </button>
             </p>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="flex w-full max-w-md mx-auto items-center justify-end">
+        <div className="mx-auto flex w-full max-w-md items-center justify-end">
           <LanguageSelector />
         </div>
       </div>
