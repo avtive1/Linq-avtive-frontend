@@ -1,191 +1,694 @@
+
 "use client"
 
+import { useEffect, useState } from "react"
 import {
-  CreditCard, ChevronDown, Download, ArrowLeftRight, Mail, Phone, MapPin, User, Share2
+  User,
+  MapPin,
+  Share2,
+  Mail,
+  Phone,
+  Save,
+  Loader2,
 } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { PersonPhoto } from "@/components/avtive"
 import { ResponsiveAppShell } from "@/components/layout/ResponsiveAppShell"
 import { renderSettingsTopTabs } from "@/components/layout/settingsTopTabs"
+import { createClient } from "@/lib/supabase/client"
+import { VCardPreview } from "@/components/vcard/vcardPreview"
 
-const menuItems = [
-  { icon: User, label: "User Info" },
-  { icon: MapPin, label: "Contact Information", active: true },
-  { icon: Share2, label: "Social Links" },
+const menu = [
+  {
+    icon: User,
+    label: "User Info",
+    href: "/settings/company",
+  },
+  {
+    icon: MapPin,
+    label: "Contact Information",
+    href: "/settings/company/contact",
+    active: true,
+  },
+  {
+    icon: Share2,
+    label: "Social Links",
+    href: "/settings/company/social",
+  },
 ]
 
 export default function CompanyContactPage() {
+  const supabase = createClient()
+
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  // =========================
+  // PERSONAL PROFILE DATA
+  // =========================
+  const [coverImage, setCoverImage] =
+    useState<string | null>(null)
+
+  const [profileImage, setProfileImage] =
+    useState<string | null>(null)
+
+  const [name, setName] = useState("")
+  const [title, setTitle] = useState("")
+  const [about, setAbout] = useState("")
+
+  // =========================
+  // PERSONAL CONTACT DATA
+  // =========================
+  const [contactEmail, setContactEmail] =
+    useState("")
+
+  const [contactPhone, setContactPhone] =
+    useState("")
+
+  const [contactCountryCode, setContactCountryCode] =
+    useState("+92")
+
+  const [contactAddress, setContactAddress] =
+    useState("")
+
+  // =========================
+  // COMPANY DATA
+  // =========================
+  const [companyName, setCompanyName] =
+    useState("")
+
+  const [website, setWebsite] =
+    useState("")
+
+  const [companyTitle, setCompanyTitle] =
+    useState("")
+
+  const [description, setDescription] =
+    useState("")
+
+  const [companyLogo, setCompanyLogo] =
+    useState<string | null>(null)
+
+  // =========================
+  // OFFICIAL CONTACT DATA
+  // company_contacts
+  // =========================
+  const [email, setEmail] =
+    useState("")
+
+  const [phone, setPhone] =
+    useState("")
+
+  const [address, setAddress] =
+    useState("")
+
+  // =========================
+  // INITIAL LOAD
+  // =========================
+  useEffect(() => {
+    void load()
+  }, [])
+
+  async function load() {
+    setLoading(true)
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (userError) {
+        console.error(
+          "Auth user error:",
+          userError
+        )
+        throw userError
+      }
+
+      if (!user) {
+        return
+      }
+
+      // =====================================================
+      // LOAD ALL DATA
+      // =====================================================
+
+      const [
+        { data: profile, error: profileError },
+        {
+          data: personalContact,
+          error: personalContactError,
+        },
+        {
+          data: company,
+          error: companyError,
+        },
+        {
+          data: companyContact,
+          error: companyContactError,
+        },
+      ] = await Promise.all([
+        // PERSONAL PROFILE
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle(),
+
+        // PERSONAL CONTACT
+        supabase
+          .from("contact_information")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+
+        // COMPANY PROFILE
+        supabase
+          .from("company_profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+
+        // OFFICIAL COMPANY CONTACT
+        supabase
+          .from("company_contacts")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ])
+
+      // =====================================================
+      // ERRORS
+      // =====================================================
+
+      if (profileError) {
+        console.error(
+          "Profile load error:",
+          profileError
+        )
+      }
+
+      if (personalContactError) {
+        console.error(
+          "Personal contact load error:",
+          personalContactError
+        )
+      }
+
+      if (companyError) {
+        console.error(
+          "Company profile load error:",
+          companyError
+        )
+      }
+
+      if (companyContactError) {
+        console.error(
+          "Company contacts load error:",
+          companyContactError
+        )
+      }
+
+      // =====================================================
+      // PERSONAL PROFILE
+      // profiles
+      // =====================================================
+
+      if (profile) {
+        setCoverImage(
+          profile.cover_url ?? null
+        )
+
+        setProfileImage(
+          profile.avatar_url ?? null
+        )
+
+        setName(
+          profile.name ??
+            profile.full_name ??
+            ""
+        )
+
+        setTitle(
+          profile.title ?? ""
+        )
+
+        setAbout(
+          profile.about ?? ""
+        )
+      }
+
+      // =====================================================
+      // PERSONAL CONTACT
+      // contact_information
+      // =====================================================
+
+      if (personalContact) {
+        setContactEmail(
+          personalContact.email ?? ""
+        )
+
+        setContactPhone(
+          personalContact.phone ?? ""
+        )
+
+        setContactCountryCode(
+          personalContact.country_code ??
+            "+92"
+        )
+
+        setContactAddress(
+          personalContact.address ?? ""
+        )
+      }
+
+      // =====================================================
+      // COMPANY PROFILE
+      // company_profiles
+      // =====================================================
+
+      if (company) {
+        setCompanyName(
+          company.company_name ?? ""
+        )
+
+        setWebsite(
+          company.website_url ?? ""
+        )
+
+        setCompanyTitle(
+          company.title ?? ""
+        )
+
+        setDescription(
+          company.description ?? ""
+        )
+
+        setCompanyLogo(
+          company.logo_url ?? null
+        )
+      }
+
+      // =====================================================
+      // OFFICIAL COMPANY CONTACT
+      // company_contacts
+      // =====================================================
+
+      if (companyContact) {
+        setEmail(
+          companyContact.email ?? ""
+        )
+
+        setPhone(
+          companyContact.phone ?? ""
+        )
+
+        setAddress(
+          companyContact.address ?? ""
+        )
+      } else {
+        // No company contact row yet
+        setEmail("")
+        setPhone("")
+        setAddress("")
+      }
+    } catch (error) {
+      console.error(
+        "Company contact page load error:",
+        error
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // =========================
+  // SAVE OFFICIAL CONTACT
+  // =========================
+  async function save() {
+    setSaving(true)
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (userError) {
+        console.error(
+          "Auth error while saving:",
+          userError
+        )
+
+        throw userError
+      }
+
+      if (!user) {
+        throw new Error(
+          "Please login first."
+        )
+      }
+
+      // =====================================================
+      // CHECK WHETHER COMPANY CONTACT ROW EXISTS
+      // =====================================================
+
+      const {
+        data: existingContact,
+        error: contactLookupError,
+      } = await supabase
+        .from("company_contacts")
+        .select("id, user_id")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      if (contactLookupError) {
+        console.error(
+          "Company contact lookup error:",
+          contactLookupError
+        )
+
+        throw contactLookupError
+      }
+
+      // =====================================================
+      // UPDATE EXISTING COMPANY CONTACT
+      // =====================================================
+
+      if (existingContact) {
+        const {
+          error: updateError,
+        } = await supabase
+          .from("company_contacts")
+          .update({
+            email: email.trim(),
+            phone: phone.trim(),
+            address: address.trim(),
+          })
+          .eq("user_id", user.id)
+
+        if (updateError) {
+          console.error(
+            "Company contact update error:",
+            updateError
+          )
+
+          throw updateError
+        }
+      }
+
+      // =====================================================
+      // INSERT NEW COMPANY CONTACT
+      // =====================================================
+
+      else {
+        const {
+          error: insertError,
+        } = await supabase
+          .from("company_contacts")
+          .insert({
+            user_id: user.id,
+            email: email.trim(),
+            phone: phone.trim(),
+            address: address.trim(),
+          })
+
+        if (insertError) {
+          console.error(
+            "Company contact insert error:",
+            insertError
+          )
+
+          throw insertError
+        }
+      }
+
+      // =====================================================
+      // RELOAD FROM SUPABASE
+      // =====================================================
+
+      const {
+        data: savedContact,
+        error: reloadError,
+      } = await supabase
+        .from("company_contacts")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      if (reloadError) {
+        console.error(
+          "Saved company contact reload error:",
+          reloadError
+        )
+
+        throw reloadError
+      }
+
+      if (!savedContact) {
+        throw new Error(
+          "Company contact was saved but could not be loaded again."
+        )
+      }
+
+      // =====================================================
+      // UPDATE UI WITH ACTUAL DATABASE DATA
+      // =====================================================
+
+      setEmail(
+        savedContact.email ?? ""
+      )
+
+      setPhone(
+        savedContact.phone ?? ""
+      )
+
+      setAddress(
+        savedContact.address ?? ""
+      )
+
+      alert(
+        "Official Contact Info updated successfully."
+      )
+    } catch (error) {
+      console.error(
+        "Official contact save failed:",
+        error
+      )
+
+      const errorMessage =
+        error &&
+        typeof error === "object" &&
+        "message" in error
+          ? String(
+              (
+                error as {
+                  message?: unknown
+                }
+              ).message
+            )
+          : error instanceof Error
+            ? error.message
+            : "Could not save official contact information."
+
+      alert(errorMessage)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // =========================
+  // LOADING
+  // =========================
+  if (loading) {
+    return (
+      <ResponsiveAppShell
+        topTabs={renderSettingsTopTabs(
+          "company"
+        )}
+      >
+        <div className="flex min-h-[500px] items-center justify-center">
+          Loading...
+        </div>
+      </ResponsiveAppShell>
+    )
+  }
+
+  // =========================
+  // PAGE
+  // =========================
   return (
-    <ResponsiveAppShell topTabs={renderSettingsTopTabs("company")}>
+    <ResponsiveAppShell
+      topTabs={renderSettingsTopTabs(
+        "company"
+      )}
+    >
       <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[220px_minmax(0,1fr)_360px]">
-          {/* Left: Side Menu */}
-          <div className="w-full min-w-0 lg:w-[220px]">
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">SELECT MENU</p>
-              <nav className="flex flex-col gap-1">
-                {menuItems.map((item) => (
-                  <a
-                    key={item.label}
-                    href={
-                      item.label === "User Info"
-                        ? "/settings/company"
-                        : item.label === "Contact Information"
-                          ? "/settings/company/contact"
-                          : "/settings/company/social"
-                    }
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm ${
-                      item.active ? "bg-blue-50 font-medium text-[#4361ee]" : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <item.icon className="size-4" />
-                    {item.label}
-                  </a>
-                ))}
-              </nav>
+
+        {/* =====================================================
+            LEFT MENU
+        ===================================================== */}
+
+        <aside className="h-fit rounded-xl border border-gray-200 bg-white p-4">
+          <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            SELECT MENU
+          </p>
+
+          <nav className="flex flex-col gap-1">
+            {menu.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm ${
+                  item.active
+                    ? "bg-blue-50 font-medium text-[#4361ee]"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <item.icon className="size-4" />
+
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        </aside>
+
+        {/* =====================================================
+            OFFICIAL COMPANY CONTACT FORM
+        ===================================================== */}
+
+        <main className="min-w-0">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Official Contact Information
+          </h2>
+
+          <p className="mb-6 text-sm text-gray-500">
+            These details belong to the company and
+            are separate from your personal Contact Info.
+          </p>
+
+          {/* OFFICIAL EMAIL */}
+
+          <div className="mb-6">
+            <Label className="mb-2 block">
+              Official Email
+            </Label>
+
+            <div className="flex items-center gap-2">
+              <Mail className="size-4 text-gray-400" />
+
+              <Input
+                value={email}
+                onChange={(event) =>
+                  setEmail(
+                    event.target.value
+                  )
+                }
+                type="email"
+                placeholder="company@example.com"
+              />
             </div>
           </div>
 
-          {/* Center: Main Form */}
-          <div className="min-w-0">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">Contact Information</h2>
-              <p className="text-sm text-gray-500">Enter your contact details for communication.</p>
-            </div>
+          {/* OFFICIAL PHONE */}
 
-            {/* Email Address */}
-            <div className="mb-6">
-              <Label htmlFor="email" className="mb-2 block text-sm font-semibold text-gray-900">
-                Email Address<span className="text-red-500">*</span>
-              </Label>
-              <Input id="email" type="email" placeholder="mesum@avtive.com" defaultValue="mesum@avtive.com" className="h-10" />
-            </div>
+          <div className="mb-6">
+            <Label className="mb-2 block">
+              Official Phone
+            </Label>
 
-            {/* Phone Number */}
-            <div className="mb-6">
-              <Label htmlFor="phone" className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900">
-                Phone Number <span className="text-gray-500 font-normal">(Optional)</span>
-                <span className="text-gray-400">ℹ</span>
-              </Label>
-              <div className="flex gap-2">
-                <div className="flex items-center gap-2 rounded-lg border border-input bg-white px-3 py-2 w-24">
-                  <span className="text-xl">🇺🇸</span>
-                  <span className="text-sm font-medium text-gray-700">+1</span>
-                  <ChevronDown className="size-4 text-gray-400" />
-                </div>
-                <Input id="phone" type="tel" placeholder="(000) 000-0000" className="h-10 flex-1" />
-              </div>
-            </div>
+            <div className="flex items-center gap-2">
+              <Phone className="size-4 text-gray-400" />
 
-            {/* Address */}
-            <div className="mb-6">
-              <Label htmlFor="address" className="mb-2 block text-sm font-semibold text-gray-900">Address</Label>
-              <Textarea id="address" placeholder="Enter your full address here..." rows={4} className="min-h-[100px]" />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3">
-              <Button variant="outline" className="px-6">Cancel</Button>
-              <Button className="bg-[#4361ee] px-6 hover:bg-[#3a56d4]">Update</Button>
+              <Input
+                value={phone}
+                onChange={(event) =>
+                  setPhone(
+                    event.target.value
+                  )
+                }
+                type="tel"
+                placeholder="+92..."
+              />
             </div>
           </div>
 
-          {/* Right: Card Live Preview - Scrollable */}
-          <div className="w-full min-w-0 lg:w-[360px]">
-            <div className="lg:sticky lg:top-8 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
-                  <CreditCard className="size-4" />
-                  Card Live Preview
-                </div>
-                <Button className="bg-[#4361ee] text-xs hover:bg-[#3a56d4]">View Card</Button>
-              </div>
+          {/* OFFICIAL ADDRESS */}
 
-              <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
-                {/* Profile Header */}
-                <div className="border-b border-gray-100 bg-white px-5 py-4 flex items-center gap-3">
-                  <PersonPhoto className="size-16 rounded-xl" />
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-900">Syed Mesum Raza</h4>
-                    <p className="text-xs text-gray-600">Creative Designer at<br/>Avtive Private Limited</p>
-                  </div>
-                </div>
+          <div className="mb-6">
+            <Label className="mb-2 block">
+              Official Address
+            </Label>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2 border-b border-gray-100 bg-white px-5 py-3">
-                  <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gray-50 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-100">
-                    <Download className="size-3.5" />Save Contact
-                  </button>
-                  <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gray-50 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-100">
-                    <ArrowLeftRight className="size-3.5" />Exchange Contact
-                  </button>
-                </div>
-
-                {/* About Section */}
-                <div className="border-b border-gray-100 bg-white px-5 py-4">
-                  <h5 className="mb-2 text-xs font-semibold text-gray-900">About</h5>
-                  <p className="text-xs leading-relaxed text-gray-600">
-                    I am a strategy-based artist with over 10 years of experience, dedicated to
-                    creating compelling design solutions that help brands stand out in today&apos;s
-                    competitive market. My expertise spans custom brand identities, visual
-                    communication design, animation, photography & video productions.
-                  </p>
-                </div>
-
-                {/* Company Overview */}
-                <div className="border-b border-gray-100 bg-white px-5 py-4">
-                  <h5 className="mb-2 text-xs font-semibold text-gray-900">Company Overview</h5>
-                  <p className="text-xs leading-relaxed text-gray-600">
-                    Avtive is an AI-powered digital networking platform that makes connecting,
-                    sharing, and following up effortless.No apps or scans required.Turn every
-                    interaction into a meaningful opportunity with smarter, faster, and more
-                    sustainable networking.
-                  </p>
-                </div>
-
-                {/* Contact Info */}
-                <div className="border-b border-gray-100 bg-white px-5 py-4">
-                  <h5 className="mb-3 text-xs font-semibold text-gray-900">Contact Info</h5>
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-2">
-                      <Mail className="size-4 text-gray-400" />
-                      <span className="text-xs text-gray-600">mesumraza@gmail.com</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="size-4 text-gray-400" />
-                      <span className="text-xs text-gray-600">(406) 555-0120</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <MapPin className="size-4 text-gray-400 mt-0.5" />
-                      <span className="text-xs text-gray-600">321 W. Main St, Suite 5, Pennsylvania 57867</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Official Contact Info */}
-                <div className="bg-white px-5 py-4">
-                  <h5 className="mb-3 text-xs font-semibold text-gray-900">Official Contact Info</h5>
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-2">
-                      <Mail className="size-4 text-gray-400" />
-                      <span className="text-xs text-gray-600">avtive@gmail.com</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="size-4 text-gray-400" />
-                      <span className="text-xs text-gray-600">(406) 555-0120</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <MapPin className="size-4 text-gray-400 mt-0.5" />
-                      <span className="text-xs text-gray-600">321 W. Gray St, Utica, Pennsylvania 57867</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Textarea
+              value={address}
+              onChange={(event) =>
+                setAddress(
+                  event.target.value
+                )
+              }
+              rows={5}
+              placeholder="Company office address"
+            />
           </div>
+
+          {/* UPDATE */}
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="bg-[#4361ee]"
+            >
+              {saving ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 size-4" />
+              )}
+
+              Update
+            </Button>
+          </div>
+        </main>
+
+        {/* =====================================================
+            EXACT VCARD PREVIEW
+        ===================================================== */}
+
+        <VCardPreview
+          // PERSONAL DATA
+          coverImage={coverImage}
+          profileImage={profileImage}
+          name={name}
+          title={title}
+          about={about}
+          contactEmail={contactEmail}
+          contactPhone={contactPhone}
+          contactCountryCode={
+            contactCountryCode
+          }
+          contactAddress={contactAddress}
+
+          // COMPANY DATA
+          companyName={companyName}
+          companyWebsite={website}
+          companyDescription={
+            description
+          }
+          companyLogo={companyLogo}
+
+          // OFFICIAL CONTACT DATA
+          officialContactEmail={email}
+          officialContactPhone={phone}
+          officialContactAddress={address}
+        />
       </div>
     </ResponsiveAppShell>
   )
 }
+

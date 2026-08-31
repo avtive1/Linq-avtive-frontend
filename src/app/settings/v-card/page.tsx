@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { ArrowLeft, Check, CreditCard } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { ResponsiveAppShell } from "@/components/layout/ResponsiveAppShell"
@@ -11,368 +12,115 @@ import { createClient } from "@/lib/supabase/client"
 import { BasicCard } from "@/components/vcard/BasicCard"
 import { StandardCard } from "@/components/vcard/StandardCard"
 
-import type {
-  PortfolioLink,
-  SkillItem,
-  SocialLink,
-} from "@/components/vcard/card-types"
+type CardCategory = "basic" | "standard"
 
-type ThemeId = "basic" | "standard"
-
-type ProfileRow = {
-  id: string
-  name: string | null
-  title: string | null
-  about: string | null
-  avatar_url: string | null
-  cover_url: string | null
-  selected_card_template: ThemeId | null
-}
-
-type ContactRow = {
-  email: string | null
-  country_code: string | null
-  phone: string | null
-  address: string | null
-}
-
-export default function VCardSettingsPage() {
+export default function VCardSelectionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const supabase = createClient()
 
-  const requestedTheme: ThemeId =
-    searchParams.get("theme") === "standard"
-      ? "standard"
-      : "basic"
-
-  const [theme, setTheme] =
-    useState<ThemeId>(requestedTheme)
-
-  const [userId, setUserId] =
-    useState<string | null>(null)
-
-  const [loading, setLoading] =
-    useState(true)
+  const [category, setCategory] =
+    useState<CardCategory>("basic")
 
   const [saving, setSaving] =
     useState(false)
 
+  const [loading, setLoading] =
+    useState(true)
+
   const [message, setMessage] =
     useState("")
 
-  const [isError, setIsError] =
-    useState(false)
-
-  const [profile, setProfile] =
-    useState<ProfileRow | null>(null)
-
-  const [contact, setContact] =
-    useState<ContactRow>({
-      email: "",
-      country_code: "",
-      phone: "",
-      address: "",
-    })
-
-  const [socialLinks, setSocialLinks] =
-    useState<SocialLink[]>([])
-
-  const [portfolioLinks, setPortfolioLinks] =
-    useState<PortfolioLink[]>([])
-
-  const [services, setServices] =
-    useState<string[]>([])
-
-  const [skills, setSkills] =
-    useState<SkillItem[]>([])
-
-  const [coverLetter, setCoverLetter] =
-    useState("")
-
   useEffect(() => {
-    let mounted = true
+    const theme = searchParams.get("theme")
 
-    async function loadVCard() {
-      try {
-        setLoading(true)
-        setMessage("")
-        setIsError(false)
-
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser()
-
-        if (authError) {
-          throw authError
-        }
-
-        if (!user) {
-          router.replace("/login")
-          return
-        }
-
-        if (!mounted) {
-          return
-        }
-
-        setUserId(user.id)
-
-        /*
-         * PROFILE
-         */
-        const {
-          data: profileData,
-          error: profileError,
-        } = await supabase
-          .from("profiles")
-          .select(
-            "id, name, title, about, avatar_url, cover_url, selected_card_template",
-          )
-          .eq("id", user.id)
-          .maybeSingle<ProfileRow>()
-
-        if (profileError) {
-          throw profileError
-        }
-
-        if (!mounted) {
-          return
-        }
-
-        if (profileData) {
-          setProfile(profileData)
-        } else {
-          setProfile({
-            id: user.id,
-            name: "",
-            title: "",
-            about: "",
-            avatar_url: null,
-            cover_url: null,
-            selected_card_template: requestedTheme,
-          })
-        }
-
-        /*
-         * Settings page se selected category priority par hai.
-         */
-        setTheme(requestedTheme)
-
-        /*
-         * CONTACT INFORMATION
-         */
-        const {
-          data: contactData,
-          error: contactError,
-        } = await supabase
-          .from("contact_information")
-          .select(
-            "email, country_code, phone, address",
-          )
-          .eq("user_id", user.id)
-          .maybeSingle<ContactRow>()
-
-        if (!contactError && contactData && mounted) {
-          setContact(contactData)
-        }
-
-        /*
-         * SOCIAL LINKS
-         */
-        const { data: socialData } =
-          await supabase
-            .from("social_links")
-            .select("*")
-            .eq("user_id", user.id)
-
-        if (socialData && mounted) {
-          setSocialLinks(
-            socialData as SocialLink[],
-          )
-        }
-
-        /*
-         * PORTFOLIO LINKS
-         */
-        const { data: portfolioData } =
-          await supabase
-            .from("portfolio_links")
-            .select("*")
-            .eq("user_id", user.id)
-
-        if (portfolioData && mounted) {
-          setPortfolioLinks(
-            portfolioData as PortfolioLink[],
-          )
-        }
-
-        /*
-         * SERVICES
-         */
-        const { data: serviceData } =
-          await supabase
-            .from("services")
-            .select("*")
-            .eq("user_id", user.id)
-
-        if (serviceData && mounted) {
-          setServices(
-            serviceData
-              .map(
-                (item: { name?: string }) =>
-                  item.name,
-              )
-              .filter(
-                (item): item is string =>
-                  Boolean(item),
-              ),
-          )
-        }
-
-        /*
-         * SKILLS
-         */
-        const { data: skillData } =
-          await supabase
-            .from("skills")
-            .select("*")
-            .eq("user_id", user.id)
-
-        if (skillData && mounted) {
-          setSkills(
-            skillData as SkillItem[],
-          )
-        }
-
-        /*
-         * COVER LETTER
-         */
-        const { data: coverLetterData } =
-          await supabase
-            .from("cover_letters")
-            .select("content")
-            .eq("user_id", user.id)
-            .maybeSingle<{
-              content: string | null
-            }>()
-
-        if (
-          coverLetterData?.content &&
-          mounted
-        ) {
-          setCoverLetter(
-            coverLetterData.content,
-          )
-        }
-      } catch (error) {
-        console.error(
-          "V-Card settings load error:",
-          error,
-        )
-
-        if (mounted) {
-          setMessage(
-            error instanceof Error
-              ? error.message
-              : "Unable to load your V-Card.",
-          )
-
-          setIsError(true)
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false)
-        }
-      }
+    if (theme === "standard") {
+      setCategory("standard")
+    } else {
+      setCategory("basic")
     }
 
-    void loadVCard()
+    setLoading(false)
+  }, [searchParams])
 
-    return () => {
-      mounted = false
-    }
-  }, [router, requestedTheme, supabase])
-
-  /*
-   * Save selected card template.
-   */
-  async function saveCard() {
-    if (!userId || saving) {
+  async function handleApplyChanges() {
+    if (saving) {
       return
     }
 
     try {
       setSaving(true)
       setMessage("")
-      setIsError(false)
+
+      const supabase = createClient()
+
+      const {
+        data: {
+          user,
+        },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (userError || !user) {
+        router.push("/login")
+        return
+      }
 
       /*
-       * Save selected card in profiles.
+       * The current project already stores the selected
+       * Basic/Standard category inside user_settings.
+       *
+       * We keep that existing value synchronized here.
        */
       const { error } = await supabase
-        .from("profiles")
-        .update({
-          selected_card_template: theme,
-        })
-        .eq("id", userId)
+        .from("user_settings")
+        .upsert(
+          {
+            user_id: user.id,
+            subscription_theme: category,
+            vcard_theme: category,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id",
+          },
+        )
 
       if (error) {
-        throw error
+        setMessage(
+          `Unable to save card selection: ${error.message}`,
+        )
+        return
       }
 
       /*
-       * Keep user_settings.vcard_theme synchronized.
+       * Card selection is complete.
+       * Move to the profile page where the user can
+       * enter/edit profile data, profile picture and background.
        */
-      const { error: settingsError } =
-        await supabase
-          .from("user_settings")
-          .update({
-            vcard_theme: theme,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", userId)
-
-      if (settingsError) {
-        console.warn(
-          "Unable to sync user_settings.vcard_theme:",
-          settingsError.message,
-        )
-      }
-
-      setMessage(
-        "Card selected successfully. Redirecting to profile...",
-      )
-
-      setTimeout(() => {
-        router.replace("/settings/profile")
-      }, 700)
+      router.push("/settings/profile")
     } catch (error) {
-      console.error(
-        "V-Card save error:",
-        error,
-      )
-
       setMessage(
         error instanceof Error
           ? error.message
-          : "Unable to save your card.",
+          : "Unable to save card selection.",
       )
-
-      setIsError(true)
+    } finally {
       setSaving(false)
     }
   }
 
-  if (loading || !profile) {
+  function handleBack() {
+    router.push("/settings")
+  }
+
+  if (loading) {
     return (
       <ResponsiveAppShell
         topTabs={renderSettingsTopTabs("general")}
       >
         <div className="flex min-h-[400px] items-center justify-center">
           <p className="text-sm text-gray-500">
-            Loading your V-Card...
+            Loading card...
           </p>
         </div>
       </ResponsiveAppShell>
@@ -383,226 +131,147 @@ export default function VCardSettingsPage() {
     <ResponsiveAppShell
       topTabs={renderSettingsTopTabs("general")}
     >
-      <div className="mx-auto w-full max-w-[900px]">
+      <main className="w-full min-w-0">
+        {/* ================= HEADER ================= */}
 
-        {/* HEADER */}
-
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-gray-900">
-            Choose Your V-Card
-          </h1>
-
-          <p className="mt-1 text-sm text-gray-500">
-            Select your{" "}
-            <strong>
-              {theme === "basic"
-                ? "Basic"
-                : "Standard"}
-            </strong>{" "}
-            card template.
-          </p>
-        </div>
-
-        {/* CATEGORY BADGE */}
-
-        <div className="mb-5 flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-              Subscription Theme
-            </p>
-
-            <p className="mt-1 text-sm font-semibold text-gray-800">
-              {theme === "basic"
-                ? "Basic"
-                : "Standard"}
-            </p>
-          </div>
-
+        <div className="mb-8">
           <button
             type="button"
-            disabled={saving}
-            onClick={() =>
-              router.push("/settings")
-            }
-            className="text-xs font-medium text-[#4361ee] hover:underline disabled:opacity-50"
+            onClick={handleBack}
+            className="mb-4 inline-flex items-center gap-2 text-sm text-gray-500 transition hover:text-gray-900"
           >
-            Change Theme
+            <ArrowLeft className="size-4" />
+            Back to Settings
           </button>
+
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-gray-100">
+              <CreditCard className="size-5 text-gray-700" />
+            </div>
+
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Choose Your V-Card
+              </h1>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Select the {category} card assigned to your
+                selected category.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* CARD SELECTION */}
+        {/* ================= CARD COLLECTION ================= */}
 
-        <section>
-          <div className="mb-3">
-            <h2 className="text-sm font-semibold text-gray-900">
-              Available Card
-            </h2>
+        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">
+                {category === "basic"
+                  ? "Basic Card"
+                  : "Standard Card"}
+              </h2>
 
-            <p className="mt-1 text-xs text-gray-500">
-              Only cards available for your selected
-              category are shown.
+              <p className="mt-1 text-xs text-gray-500">
+                This card design is fixed and cannot be
+                customized.
+              </p>
+            </div>
+
+            <div className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium capitalize text-gray-700">
+              {category}
+            </div>
+          </div>
+
+          {/* ================= FIXED CARD ================= */}
+
+          <div className="flex justify-center overflow-x-auto py-6">
+            <div className="relative shrink-0">
+              {category === "standard" ? (
+                <StandardCard
+                  coverImage={null}
+                  profileImage={null}
+                  name="Your Name"
+                  title="Your professional title"
+                  about=""
+                  contactEmail=""
+                  contactPhone=""
+                  contactCountryCode="+92"
+                  contactAddress=""
+                  socialLinks={[]}
+                  portfolioLinks={[]}
+                  services={[]}
+                  skills={[]}
+                  coverLetter=""
+                />
+              ) : (
+                <BasicCard
+                  coverImage={null}
+                  profileImage={null}
+                  name="Your Name"
+                  title="Your professional title"
+                  about=""
+                  contactEmail=""
+                  contactPhone=""
+                  contactCountryCode="+92"
+                  contactAddress=""
+                  socialLinks={[]}
+                  portfolioLinks={[]}
+                  services={[]}
+                  skills={[]}
+                  coverLetter=""
+                />
+              )}
+
+              {/* ================= SELECTED BADGE ================= */}
+
+              <div className="absolute right-4 top-4 z-30 flex items-center gap-2 rounded-full bg-black px-3 py-2 text-xs font-medium text-white shadow-lg">
+                <Check className="size-3.5" />
+                Selected
+              </div>
+            </div>
+          </div>
+
+          {/* ================= LOCKED DESIGN MESSAGE ================= */}
+
+          <div className="mt-6 rounded-xl border border-gray-100 bg-gray-50 px-5 py-4">
+            <p className="text-sm font-medium text-gray-800">
+              Fixed card design
+            </p>
+
+            <p className="mt-1 text-xs leading-relaxed text-gray-500">
+              The card layout and design are fixed. You will
+              only be able to edit your profile information,
+              profile picture and background on the next
+              page.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+          {/* ================= MESSAGE ================= */}
 
-            {/* BASIC CARD */}
+          {message && (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              {message}
+            </div>
+          )}
 
-            {theme === "basic" && (
-              <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Basic Card
-                    </p>
+          {/* ================= APPLY ================= */}
 
-                    <p className="mt-1 text-xs text-gray-500">
-                      Basic V-Card template
-                    </p>
-                  </div>
-
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-[11px] font-medium text-gray-600">
-                    Basic
-                  </span>
-                </div>
-
-                <div className="overflow-hidden rounded-xl border border-gray-200">
-                  <BasicCard
-                    coverImage={
-                      profile.cover_url
-                    }
-                    profileImage={
-                      profile.avatar_url
-                    }
-                    name={profile.name || ""}
-                    title={profile.title || ""}
-                    about={profile.about || ""}
-                    contactEmail={
-                      contact.email || ""
-                    }
-                    contactPhone={
-                      contact.phone || ""
-                    }
-                    contactCountryCode={
-                      contact.country_code || ""
-                    }
-                    contactAddress={
-                      contact.address || ""
-                    }
-                    socialLinks={socialLinks}
-                    portfolioLinks={
-                      portfolioLinks
-                    }
-                    services={services}
-                    skills={skills}
-                    coverLetter={coverLetter}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* STANDARD CARD */}
-
-            {theme === "standard" && (
-              <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Standard Card
-                    </p>
-
-                    <p className="mt-1 text-xs text-gray-500">
-                      Standard V-Card template
-                    </p>
-                  </div>
-
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-[11px] font-medium text-gray-600">
-                    Standard
-                  </span>
-                </div>
-
-                <div className="overflow-hidden rounded-xl border border-gray-200">
-                  <StandardCard
-                    coverImage={
-                      profile.cover_url
-                    }
-                    profileImage={
-                      profile.avatar_url
-                    }
-                    name={profile.name || ""}
-                    title={profile.title || ""}
-                    about={profile.about || ""}
-                    contactEmail={
-                      contact.email || ""
-                    }
-                    contactPhone={
-                      contact.phone || ""
-                    }
-                    contactCountryCode={
-                      contact.country_code || ""
-                    }
-                    contactAddress={
-                      contact.address || ""
-                    }
-                    socialLinks={socialLinks}
-                    portfolioLinks={
-                      portfolioLinks
-                    }
-                    services={services}
-                    skills={skills}
-                    coverLetter={coverLetter}
-                  />
-                </div>
-              </div>
-            )}
+          <div className="mt-8 flex justify-end">
+            <Button
+              type="button"
+              onClick={handleApplyChanges}
+              disabled={saving}
+              className="bg-[#4361ee] px-7 text-white hover:bg-[#3a56d4]"
+            >
+              {saving
+                ? "Applying..."
+                : "Apply Changes"}
+            </Button>
           </div>
         </section>
-
-        {/* MESSAGE */}
-
-        {message && (
-          <p
-            className={[
-              "mt-4 text-center text-sm",
-              isError
-                ? "text-red-500"
-                : "text-green-600",
-            ].join(" ")}
-          >
-            {message}
-          </p>
-        )}
-
-        {/* ACTIONS */}
-
-        <div className="mt-5 flex items-center justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={saving}
-            onClick={() =>
-              router.push("/settings")
-            }
-          >
-            Back
-          </Button>
-
-          <Button
-            type="button"
-            onClick={saveCard}
-            disabled={saving}
-            className="bg-[#4361ee] text-white hover:bg-[#3a56d4]"
-          >
-            {saving
-              ? "Saving..."
-              : `Select ${
-                  theme === "basic"
-                    ? "Basic"
-                    : "Standard"
-                } Card`}
-          </Button>
-        </div>
-      </div>
+      </main>
     </ResponsiveAppShell>
   )
 }

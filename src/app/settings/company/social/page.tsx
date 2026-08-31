@@ -1,258 +1,1028 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
-  CreditCard, Plus, Mail, Phone, MapPin, User, Share2
+  User,
+  MapPin,
+  Share2,
+  Plus,
+  Trash2,
+  Save,
+  Loader2,
+  UserRound,
+  Building2,
 } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { ResponsiveAppShell } from "@/components/layout/ResponsiveAppShell"
 import { renderSettingsTopTabs } from "@/components/layout/settingsTopTabs"
+import { createClient } from "@/lib/supabase/client"
+import { VCardPreview } from "@/components/vcard/vcardPreview"
 
-const menuItems = [
-  { icon: User, label: "User Info" },
-  { icon: MapPin, label: "Contact Information" },
-  { icon: Share2, label: "Social Links", active: true },
+import type {
+  PortfolioLink,
+  SkillItem,
+  SocialLink,
+} from "@/components/vcard/card-types"
+
+type Link = {
+  platform: string
+  username: string
+}
+
+const platforms = [
+  "facebook",
+  "instagram",
+  "twitter",
+  "linkedin",
+  "behance",
+  "pinterest",
+  "snapchat",
 ]
 
+const menu = [
+  {
+    icon: User,
+    label: "User Info",
+    href: "/settings/company",
+  },
+  {
+    icon: MapPin,
+    label: "Contact Information",
+    href: "/settings/company/contact",
+  },
+  {
+    icon: Share2,
+    label: "Social Links",
+    href: "/settings/company/social",
+    active: true,
+  },
+]
+
+const supabase = createClient()
+
+function makeId() {
+  return Math.random().toString(36).slice(2, 10)
+}
+
+function normalizePortfolioLinks(
+  value: unknown,
+): PortfolioLink[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .filter(
+      (item): item is Record<string, unknown> =>
+        typeof item === "object" &&
+        item !== null,
+    )
+    .map((item) => ({
+      id:
+        typeof item.id === "string"
+          ? item.id
+          : makeId(),
+
+      platform:
+        typeof item.platform === "string"
+          ? item.platform
+          : "",
+
+      username:
+        typeof item.username === "string"
+          ? item.username
+          : "",
+    }))
+}
+
+function normalizeSkills(
+  value: unknown,
+): SkillItem[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .filter(
+      (item): item is Record<string, unknown> =>
+        typeof item === "object" &&
+        item !== null,
+    )
+    .map((item) => ({
+      id:
+        typeof item.id === "string"
+          ? item.id
+          : makeId(),
+
+      name:
+        typeof item.name === "string"
+          ? item.name
+          : "",
+
+      featured:
+        item.featured === true,
+    }))
+    .filter((skill) => skill.name.trim())
+}
+
+function normalizeServices(
+  value: unknown,
+): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .filter(
+      (item): item is string =>
+        typeof item === "string",
+    )
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
 export default function CompanySocialLinksPage() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  // =========================================================
+  // PERSONAL PROFILE
+  // =========================================================
+
+  const [coverImage, setCoverImage] =
+    useState<string | null>(null)
+
+  const [profileImage, setProfileImage] =
+    useState<string | null>(null)
+
+  const [name, setName] = useState("")
+  const [title, setTitle] = useState("")
+  const [about, setAbout] = useState("")
+
+  // =========================================================
+  // PERSONAL CONTACT
+  // =========================================================
+
+  const [contactEmail, setContactEmail] = useState("")
+  const [contactPhone, setContactPhone] = useState("")
+  const [contactCountryCode, setContactCountryCode] =
+    useState("+92")
+  const [contactAddress, setContactAddress] =
+    useState("")
+
+  // =========================================================
+  // PERSONAL SOCIAL
+  // =========================================================
+
+  const [personalSocialLinks, setPersonalSocialLinks] =
+    useState<Link[]>([])
+
+  // =========================================================
+  // EXPERTISE
+  // =========================================================
+
+  const [services, setServices] =
+    useState<string[]>([])
+
+  const [portfolioLinks, setPortfolioLinks] =
+    useState<PortfolioLink[]>([])
+
+  const [skills, setSkills] =
+    useState<SkillItem[]>([])
+
+  const [coverLetter, setCoverLetter] =
+    useState("")
+
+  // =========================================================
+  // COMPANY
+  // =========================================================
+
+  const [companyName, setCompanyName] =
+    useState("")
+
+  const [website, setWebsite] =
+    useState("")
+
+  const [description, setDescription] =
+    useState("")
+
+  const [companyLogo, setCompanyLogo] =
+    useState<string | null>(null)
+
+  // =========================================================
+  // OFFICIAL CONTACT
+  // =========================================================
+
+  const [officialEmail, setOfficialEmail] =
+    useState("")
+
+  const [officialPhone, setOfficialPhone] =
+    useState("")
+
+  const [officialAddress, setOfficialAddress] =
+    useState("")
+
+  // =========================================================
+  // OFFICIAL COMPANY SOCIAL
+  // =========================================================
+
+  const [links, setLinks] =
+    useState<Link[]>([])
+
+  // =========================================================
+  // LOAD EVERYTHING
+  // =========================================================
+
+  useEffect(() => {
+    void load()
+  }, [])
+
+  async function load() {
+    setLoading(true)
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (userError) {
+        throw userError
+      }
+
+      if (!user) {
+        return
+      }
+
+      const [
+        { data: profile, error: profileError },
+        {
+          data: personalContact,
+          error: personalContactError,
+        },
+        {
+          data: personalSocial,
+          error: personalSocialError,
+        },
+        {
+          data: expertise,
+          error: expertiseError,
+        },
+        {
+          data: company,
+          error: companyError,
+        },
+        {
+          data: companyContact,
+          error: companyContactError,
+        },
+        {
+          data: companySocial,
+          error: companySocialError,
+        },
+      ] = await Promise.all([
+        // PERSONAL PROFILE
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle(),
+
+        // PERSONAL CONTACT
+        supabase
+          .from("contact_information")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+
+        // PERSONAL SOCIAL
+        supabase
+          .from("social_links")
+          .select("platform, username")
+          .eq("user_id", user.id)
+          .order("created_at", {
+            ascending: true,
+          }),
+
+        // EXPERTISE
+        supabase
+          .from("profile_expertise_skills")
+          .select(
+            "services, portfolio_links, cover_letter, skills",
+          )
+          .eq("user_id", user.id)
+          .maybeSingle(),
+
+        // COMPANY PROFILE
+        supabase
+          .from("company_profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+
+        // OFFICIAL COMPANY CONTACT
+        supabase
+          .from("company_contacts")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+
+        // OFFICIAL COMPANY SOCIAL
+        supabase
+          .from("company_social_links")
+          .select("platform, username")
+          .eq("user_id", user.id)
+          .order("created_at", {
+            ascending: true,
+          }),
+      ])
+
+      // =====================================================
+      // ERRORS
+      // =====================================================
+
+      if (profileError) {
+        console.error(
+          "Profile load error:",
+          profileError,
+        )
+      }
+
+      if (personalContactError) {
+        console.error(
+          "Personal contact load error:",
+          personalContactError,
+        )
+      }
+
+      if (personalSocialError) {
+        console.error(
+          "Personal social load error:",
+          personalSocialError,
+        )
+      }
+
+      if (expertiseError) {
+        console.error(
+          "Expertise load error:",
+          expertiseError,
+        )
+      }
+
+      if (companyError) {
+        console.error(
+          "Company profile load error:",
+          companyError,
+        )
+      }
+
+      if (companyContactError) {
+        console.error(
+          "Company contacts load error:",
+          companyContactError,
+        )
+      }
+
+      if (companySocialError) {
+        console.error(
+          "Company links load error:",
+          companySocialError,
+        )
+      }
+
+      // =====================================================
+      // PERSONAL PROFILE
+      // =====================================================
+
+      if (profile) {
+        setCoverImage(
+          profile.cover_url ?? null,
+        )
+
+        setProfileImage(
+          profile.avatar_url ?? null,
+        )
+
+        setName(
+          profile.name ??
+            profile.full_name ??
+            "",
+        )
+
+        setTitle(
+          profile.title ?? "",
+        )
+
+        setAbout(
+          profile.about ?? "",
+        )
+      }
+
+      // =====================================================
+      // PERSONAL CONTACT
+      // =====================================================
+
+      if (personalContact) {
+        setContactEmail(
+          personalContact.email ??
+            personalContact.contact_email ??
+            "",
+        )
+
+        setContactPhone(
+          personalContact.phone ??
+            personalContact.contact_phone ??
+            "",
+        )
+
+        setContactCountryCode(
+          personalContact.country_code ??
+            personalContact.contact_country_code ??
+            "+92",
+        )
+
+        setContactAddress(
+          personalContact.address ??
+            personalContact.contact_address ??
+            "",
+        )
+      }
+
+      // =====================================================
+      // PERSONAL SOCIAL
+      // =====================================================
+
+      setPersonalSocialLinks(
+        (personalSocial ?? [])
+          .map((row) => ({
+            platform: row.platform ?? "",
+            username: row.username ?? "",
+          }))
+          .filter(
+            (row) =>
+              row.platform &&
+              row.username,
+          ),
+      )
+
+      // =====================================================
+      // EXPERTISE / SERVICES / PORTFOLIO / SKILLS
+      // =====================================================
+
+      if (expertise) {
+        setServices(
+          normalizeServices(
+            expertise.services,
+          ),
+        )
+
+        setPortfolioLinks(
+          normalizePortfolioLinks(
+            expertise.portfolio_links,
+          ),
+        )
+
+        setSkills(
+          normalizeSkills(
+            expertise.skills,
+          ),
+        )
+
+        setCoverLetter(
+          expertise.cover_letter ?? "",
+        )
+      } else {
+        setServices([])
+        setPortfolioLinks([])
+        setSkills([])
+        setCoverLetter("")
+      }
+
+      // =====================================================
+      // COMPANY PROFILE
+      // =====================================================
+
+      if (company) {
+        setCompanyName(
+          company.company_name ?? "",
+        )
+
+        setWebsite(
+          company.website_url ?? "",
+        )
+
+        setDescription(
+          company.description ?? "",
+        )
+
+        setCompanyLogo(
+          company.logo_url ?? null,
+        )
+      }
+
+      // =====================================================
+      // OFFICIAL CONTACT
+      // =====================================================
+
+      if (companyContact) {
+        setOfficialEmail(
+          companyContact.email ??
+            companyContact.contact_email ??
+            "",
+        )
+
+        setOfficialPhone(
+          companyContact.phone ??
+            companyContact.contact_phone ??
+            "",
+        )
+
+        setOfficialAddress(
+          companyContact.address ??
+            companyContact.contact_address ??
+            "",
+        )
+      } else {
+        setOfficialEmail("")
+        setOfficialPhone("")
+        setOfficialAddress("")
+      }
+
+      // =====================================================
+      // OFFICIAL SOCIAL
+      // =====================================================
+
+      setLinks(
+        (companySocial ?? [])
+          .map((row) => ({
+            platform: row.platform ?? "",
+            username: row.username ?? "",
+          }))
+          .filter(
+            (row) =>
+              row.platform &&
+              row.username,
+          ),
+      )
+    } catch (error) {
+      console.error(
+        "Company social page loading error:",
+        error,
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // =========================================================
+  // ADD
+  // =========================================================
+
+  function add() {
+    const nextPlatform =
+      platforms.find(
+        (platform) =>
+          !links.some(
+            (link) =>
+              link.platform === platform,
+          ),
+      ) ?? ""
+
+    if (!nextPlatform) {
+      return
+    }
+
+    setLinks((current) => [
+      ...current,
+      {
+        platform: nextPlatform,
+        username: "",
+      },
+    ])
+  }
+
+  // =========================================================
+  // REMOVE
+  // =========================================================
+
+  function remove(index: number) {
+    setLinks((current) =>
+      current.filter(
+        (_, currentIndex) =>
+          currentIndex !== index,
+      ),
+    )
+  }
+
+  // =========================================================
+  // UPDATE
+  // =========================================================
+
+  function update(
+    index: number,
+    key: keyof Link,
+    value: string,
+  ) {
+    setLinks((current) =>
+      current.map(
+        (link, currentIndex) =>
+          currentIndex === index
+            ? {
+                ...link,
+                [key]: value,
+              }
+            : link,
+      ),
+    )
+  }
+
+  // =========================================================
+  // SAVE COMPANY SOCIAL
+  // =========================================================
+
+  async function save() {
+  setSaving(true)
+
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError) {
+      throw userError
+    }
+
+    if (!user) {
+      throw new Error("Please login first.")
+    }
+
+    const cleanLinks = links
+      .map((link) => ({
+        platform: link.platform.trim().toLowerCase(),
+        username: link.username.trim(),
+      }))
+      .filter(
+        (link) =>
+          link.platform &&
+          link.username,
+      )
+
+    // DELETE OLD OFFICIAL SOCIAL LINKS
+    const {
+      error: deleteError,
+    } = await supabase
+      .from("company_social_links")
+      .delete()
+      .eq("user_id", user.id)
+
+    if (deleteError) {
+      throw deleteError
+    }
+
+    // INSERT NEW OFFICIAL SOCIAL LINKS
+    if (cleanLinks.length > 0) {
+      const {
+        error: insertError,
+      } = await supabase
+        .from("company_social_links")
+        .insert(
+          cleanLinks.map((link) => ({
+            user_id: user.id,
+            platform: link.platform,
+            username: link.username,
+          })),
+        )
+
+      if (insertError) {
+        throw insertError
+      }
+    }
+
+    setLinks(cleanLinks)
+
+    alert(
+      "Official Social Links updated successfully.",
+    )
+  } catch (error) {
+    console.error(
+      "Company social save error:",
+      error,
+    )
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Could not save company links.",
+    )
+  } finally {
+    setSaving(false)
+  }
+}
+
+  // =========================================================
+  // LOADING
+  // =========================================================
+
+  if (loading) {
+    return (
+      <ResponsiveAppShell
+        topTabs={renderSettingsTopTabs(
+          "company",
+        )}
+      >
+        <div className="flex min-h-[500px] items-center justify-center">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Loader2 className="size-4 animate-spin" />
+            Loading company information...
+          </div>
+        </div>
+      </ResponsiveAppShell>
+    )
+  }
+
+  // =========================================================
+  // PAGE
+  // =========================================================
+
   return (
-    <ResponsiveAppShell topTabs={renderSettingsTopTabs("company")}>
+    <ResponsiveAppShell
+      topTabs={renderSettingsTopTabs(
+        "company",
+      )}
+    >
       <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[220px_minmax(0,1fr)_360px]">
-          {/* Left: Side Menu */}
-          <div className="w-full min-w-0 lg:w-[220px]">
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">SELECT MENU</p>
-              <nav className="flex flex-col gap-1">
-                {menuItems.map((item) => (
-                  <a
-                    key={item.label}
-                    href={
-                      item.label === "User Info"
-                        ? "/settings/company"
-                        : item.label === "Contact Information"
-                          ? "/settings/company/contact"
-                          : "/settings/company/social"
-                    }
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm ${
-                      item.active ? "bg-blue-50 font-medium text-[#4361ee]" : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <item.icon className="size-4" />
-                    {item.label}
-                  </a>
-                ))}
-              </nav>
-            </div>
+
+        {/* =================================================
+            LEFT MENU
+        ================================================= */}
+
+        <aside className="h-fit rounded-xl border border-gray-200 bg-white p-4">
+          <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            SELECT MENU
+          </p>
+
+          <nav className="flex flex-col gap-1">
+            {menu.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm ${
+                  item.active
+                    ? "bg-blue-50 font-medium text-[#4361ee]"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <item.icon className="size-4" />
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        </aside>
+
+        {/* =================================================
+            MAIN
+        ================================================= */}
+
+        <main className="min-w-0">
+
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Social Links
+            </h2>
+
+            <p className="text-sm text-gray-500">
+              Manage your personal and official
+              company social links.
+            </p>
           </div>
 
-          {/* Center: Main Form */}
-          <div className="min-w-0">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">Social Links</h2>
-              <p className="text-sm text-gray-500">Manage your social media connections.</p>
-            </div>
+          {/* =================================================
+              PERSONAL SOCIAL
+          ================================================= */}
 
-            {/* Facebook */}
-            <div className="mb-5">
-              <Label htmlFor="facebook" className="mb-2 block text-sm font-semibold text-gray-900">Facebook</Label>
-              <div className="flex gap-2">
-                <Input value="facebook.com/" readOnly className="h-10 w-36 bg-gray-50" />
-                <Input id="facebook" placeholder="username" className="h-10 flex-1" />
+          <section className="mb-8 rounded-xl border border-gray-200 bg-white p-5">
+
+            <div className="mb-4 flex items-center gap-2">
+              <UserRound className="size-4 text-gray-500" />
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Personal Social
+                </h3>
+
+                <p className="text-xs text-gray-500">
+                  Loaded from your personal profile.
+                </p>
               </div>
             </div>
 
-            {/* Instagram */}
-            <div className="mb-5">
-              <Label htmlFor="instagram" className="mb-2 block text-sm font-semibold text-gray-900">Instagram</Label>
-              <div className="flex gap-2">
-                <Input value="instagram.com/" readOnly className="h-10 w-36 bg-gray-50" />
-                <Input id="instagram" placeholder="username" className="h-10 flex-1" />
+            {personalSocialLinks.length === 0 ? (
+              <p className="text-sm text-gray-400">
+                No personal social links added.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {personalSocialLinks.map(
+                  (link, index) => (
+                    <div
+                      key={`${link.platform}-${index}`}
+                      className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                    >
+                      <p className="text-xs font-semibold capitalize text-gray-700">
+                        {link.platform}
+                      </p>
+
+                      <p className="text-xs text-gray-500">
+                        {link.username}
+                      </p>
+                    </div>
+                  ),
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* =================================================
+              OFFICIAL SOCIAL
+          ================================================= */}
+
+          <section className="rounded-xl border border-gray-200 bg-white p-5">
+
+            <div className="mb-5 flex items-center gap-2">
+              <Building2 className="size-4 text-gray-500" />
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Official Social
+                </h3>
+
+                <p className="text-xs text-gray-500">
+                  These links belong to the company.
+                </p>
               </div>
             </div>
 
-            {/* Behance */}
-            <div className="mb-6">
-              <Label htmlFor="behance" className="mb-2 block text-sm font-semibold text-gray-900">Behance</Label>
-              <div className="flex gap-2">
-                <Input value="linkedin.com" readOnly className="h-10 w-36 bg-gray-50" />
-                <Input id="behance" placeholder="username" className="h-10 flex-1" />
-              </div>
+            <div className="space-y-4">
+              {links.map(
+                (link, index) => (
+                  <div
+                    key={`${link.platform}-${index}`}
+                    className="flex gap-2"
+                  >
+                    <select
+                      value={link.platform}
+                      onChange={(event) =>
+                        update(
+                          index,
+                          "platform",
+                          event.target.value,
+                        )
+                      }
+                      className="h-10 w-36 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="">
+                        Platform
+                      </option>
+
+                      {platforms.map(
+                        (platform) => (
+                          <option
+                            key={platform}
+                            value={platform}
+                          >
+                            {platform
+                              .charAt(0)
+                              .toUpperCase() +
+                              platform.slice(1)}
+                          </option>
+                        ),
+                      )}
+                    </select>
+
+                    <Input
+                      value={
+                        link.username
+                      }
+                      onChange={(event) =>
+                        update(
+                          index,
+                          "username",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="username or full URL"
+                    />
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() =>
+                        remove(index)
+                      }
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                ),
+              )}
             </div>
 
-            {/* Add Social Link Button */}
-            <button className="mb-6 flex items-center gap-2 text-sm font-medium text-[#4361ee] hover:text-[#3a56d4]">
+            <button
+              type="button"
+              onClick={add}
+              className="mt-5 flex items-center gap-2 text-sm font-medium text-[#4361ee] hover:text-[#3a56d4]"
+            >
               <Plus className="size-4" />
               Add Social Link
             </button>
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3">
-              <Button variant="outline" className="px-6">Cancel</Button>
-              <Button className="bg-[#4361ee] px-6 hover:bg-[#3a56d4]">Update</Button>
+            <div className="mt-8 flex justify-end">
+              <Button
+                onClick={save}
+                disabled={saving}
+                className="bg-[#4361ee]"
+              >
+                {saving ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 size-4" />
+                )}
+
+                Update
+              </Button>
             </div>
-          </div>
+          </section>
+        </main>
 
-          {/* Right: Card Live Preview - Scrollable */}
-          <div className="w-full min-w-0 lg:w-[360px]">
-            <div className="lg:sticky lg:top-8 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
-                  <CreditCard className="size-4" />
-                  Card Live Preview
-                </div>
-                <Button className="bg-[#4361ee] text-xs hover:bg-[#3a56d4]">View Card</Button>
-              </div>
+        {/* =================================================
+            VCARD
+        ================================================= */}
 
-              <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
-                {/* About Section */}
-                <div className="border-b border-gray-100 bg-white px-5 py-4">
-                  <h5 className="mb-2 text-xs font-semibold text-gray-900">About</h5>
-                  <p className="text-xs leading-relaxed text-gray-600">
-                    I am a strategy-based artist with over 10 years of experience, dedicated to
-                    creating compelling design solutions that help brands stand out in today&apos;s
-                    competitive market. My expertise spans custom brand identities, visual
-                    communication design, animation, photography & video productions.
-                  </p>
-                </div>
+        <VCardPreview
+          // PERSONAL PROFILE
+          coverImage={coverImage}
+          profileImage={profileImage}
+          name={name}
+          title={title}
+          about={about}
 
-                {/* Company Overview */}
-                <div className="border-b border-gray-100 bg-white px-5 py-4">
-                  <h5 className="mb-2 text-xs font-semibold text-gray-900">Company Overview</h5>
-                  <p className="text-xs leading-relaxed text-gray-600">
-                    Avtive is an AI-powered digital networking platform that makes connecting,
-                    sharing, and following up effortless.No apps or scans required.Turn every
-                    interaction into a meaningful opportunity with smarter, faster, and more
-                    sustainable networking.
-                  </p>
-                </div>
+          // PERSONAL CONTACT
+          contactEmail={contactEmail}
+          contactPhone={contactPhone}
+          contactCountryCode={
+            contactCountryCode
+          }
+          contactAddress={contactAddress}
 
-                {/* Contact Info */}
-                <div className="border-b border-gray-100 bg-white px-5 py-4">
-                  <h5 className="mb-3 text-xs font-semibold text-gray-900">Contact Info</h5>
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-2">
-                      <Mail className="size-4 text-gray-400" />
-                      <span className="text-xs text-gray-600">mesumraza@gmail.com</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="size-4 text-gray-400" />
-                      <span className="text-xs text-gray-600">(406) 555-0120</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <MapPin className="size-4 text-gray-400 mt-0.5" />
-                      <span className="text-xs text-gray-600">321 W. Gray St, Utica, Pennsylvania 57867</span>
-                    </div>
-                  </div>
-                </div>
+          // PERSONAL SOCIAL
+          socialLinks={personalSocialLinks.map(
+            (link) => ({
+              platform:
+                link.platform as SocialLink["platform"],
+              username:
+                link.username,
+            }),
+          )}
 
-                {/* Official Contact Info */}
-                <div className="border-b border-gray-100 bg-white px-5 py-4">
-                  <h5 className="mb-3 text-xs font-semibold text-gray-900">Official Contact Info</h5>
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-2">
-                      <Mail className="size-4 text-gray-400" />
-                      <span className="text-xs text-gray-600">avtive@gmail.com</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="size-4 text-gray-400" />
-                      <span className="text-xs text-gray-600">(406) 555-0120</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <MapPin className="size-4 text-gray-400 mt-0.5" />
-                      <span className="text-xs text-gray-600">321 W. Gray St, Utica, Pennsylvania 57867</span>
-                    </div>
-                  </div>
-                </div>
+          // EXPERTISE
+          portfolioLinks={
+            portfolioLinks
+          }
+          services={services}
+          skills={skills}
+          coverLetter={coverLetter}
 
-                {/* Social Section */}
-                <div className="border-b border-gray-100 bg-white px-5 py-4">
-                  <h5 className="mb-3 text-xs font-semibold text-gray-900">Social</h5>
-                  <div className="flex items-center gap-3">
-                    {/* Instagram */}
-                    <div className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45]">
-                      <svg className="size-5" viewBox="0 0 24 24" fill="white">
-                        <path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/>
-                      </svg>
-                    </div>
-                    {/* LinkedIn */}
-                    <div className="flex size-9 items-center justify-center rounded bg-[#0A66C2]">
-                      <svg className="size-5" viewBox="0 0 24 24" fill="white">
-                        <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
-                      </svg>
-                    </div>
-                    {/* X/Twitter */}
-                    <div className="flex size-9 items-center justify-center rounded bg-black">
-                      <svg className="size-4" viewBox="0 0 24 24" fill="white">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                      </svg>
-                    </div>
-                    {/* Pinterest */}
-                    <div className="flex size-9 items-center justify-center rounded-full bg-[#E60023]">
-                      <svg className="size-5" viewBox="0 0 24 24" fill="white">
-                        <path d="M9.04 21.54c.96.29 1.93.46 2.96.46a10 10 0 0 0 10-10A10 10 0 0 0 12 2 10 10 0 0 0 2 12c0 4.25 2.67 7.9 6.44 9.34c-.09-.78-.18-2.07 0-2.96l1.15-4.94s-.29-.58-.29-1.5c0-1.38.86-2.41 1.84-2.41c.86 0 1.26.63 1.26 1.44c0 .86-.57 2.09-.86 3.27c-.17.98.52 1.84 1.52 1.84c1.78 0 3.16-1.9 3.16-4.58c0-2.4-1.72-4.04-4.19-4.04c-2.82 0-4.48 2.1-4.48 4.31c0 .86.28 1.73.74 2.3c.09.06.09.14.06.29l-.29 1.09c0 .17-.11.23-.28.11c-1.28-.56-2.02-2.38-2.02-3.85c0-3.16 2.24-6.03 6.56-6.03c3.44 0 6.12 2.47 6.12 5.75c0 3.44-2.13 6.2-5.18 6.2c-.97 0-1.92-.52-2.26-1.13l-.67 2.37c-.23.86-.86 2.01-1.29 2.7v-.03z"/>
-                      </svg>
-                    </div>
-                    {/* Facebook */}
-                    <div className="flex size-9 items-center justify-center rounded-full bg-[#1877F2]">
-                      <svg className="size-5" viewBox="0 0 24 24" fill="white">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                      </svg>
-                    </div>
-                    {/* Snapchat */}
-                    <div className="flex size-9 items-center justify-center rounded-full bg-[#FFFC00]">
-                      <svg className="size-5" viewBox="0 0 24 24" fill="black">
-                        <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 4.791 4.014.255.044.435.27.42.509 0 .075-.015.149-.045.225-.24.569-1.273.988-3.146 1.271-.059.091-.12.375-.164.57-.029.179-.074.36-.134.553-.076.271-.27.405-.555.405h-.03c-.135 0-.313-.031-.538-.074-.36-.075-.765-.135-1.273-.135-.3 0-.599.015-.913.074-.6.104-1.123.464-1.723.884-.853.599-1.826 1.288-3.294 1.288-.06 0-.119-.015-.18-.015h-.149c-1.468 0-2.427-.675-3.279-1.288-.599-.42-1.107-.779-1.707-.884-.314-.045-.629-.074-.928-.074-.54 0-.958.089-1.272.149-.211.043-.391.074-.54.074-.374 0-.523-.224-.583-.42-.061-.192-.09-.389-.135-.567-.046-.181-.105-.494-.166-.57-1.918-.222-2.95-.642-3.189-1.226-.031-.063-.052-.12-.055-.18-.015-.226.156-.451.416-.495 3.236-.556 4.716-3.909 4.776-4.043l.017-.029c.164-.345.193-.645.104-.869-.195-.434-.884-.658-1.332-.809-.121-.029-.24-.074-.346-.119-1.107-.435-1.257-.93-1.197-1.273.09-.479.674-.793 1.168-.793.146 0 .27.029.383.074.42.194.789.3 1.104.3.234 0 .384-.06.465-.105l-.046-.569c-.098-1.626-.225-3.651.307-4.837C7.392 1.077 10.739.807 11.727.807l.419-.015h.06z"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
+          // COMPANY
+          companyName={companyName}
+          companyWebsite={website}
+          companyDescription={description}
+          companyLogo={companyLogo}
 
-                {/* Avtive Socials Section */}
-                <div className="bg-white px-5 py-4">
-                  <h5 className="mb-3 text-xs font-semibold text-gray-900">Avtive Socials</h5>
-                  <div className="flex items-center gap-3">
-                    {/* Instagram */}
-                    <div className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45]">
-                      <svg className="size-5" viewBox="0 0 24 24" fill="white">
-                        <path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/>
-                      </svg>
-                    </div>
-                    {/* LinkedIn */}
-                    <div className="flex size-9 items-center justify-center rounded bg-[#0A66C2]">
-                      <svg className="size-5" viewBox="0 0 24 24" fill="white">
-                        <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
-                      </svg>
-                    </div>
-                    {/* X/Twitter */}
-                    <div className="flex size-9 items-center justify-center rounded bg-black">
-                      <svg className="size-4" viewBox="0 0 24 24" fill="white">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                      </svg>
-                    </div>
-                    {/* Pinterest */}
-                    <div className="flex size-9 items-center justify-center rounded-full bg-[#E60023]">
-                      <svg className="size-5" viewBox="0 0 24 24" fill="white">
-                        <path d="M9.04 21.54c.96.29 1.93.46 2.96.46a10 10 0 0 0 10-10A10 10 0 0 0 12 2 10 10 0 0 0 2 12c0 4.25 2.67 7.9 6.44 9.34c-.09-.78-.18-2.07 0-2.96l1.15-4.94s-.29-.58-.29-1.5c0-1.38.86-2.41 1.84-2.41c.86 0 1.26.63 1.26 1.44c0 .86-.57 2.09-.86 3.27c-.17.98.52 1.84 1.52 1.84c1.78 0 3.16-1.9 3.16-4.58c0-2.4-1.72-4.04-4.19-4.04c-2.82 0-4.48 2.1-4.48 4.31c0 .86.28 1.73.74 2.3c.09.06.09.14.06.29l-.29 1.09c0 .17-.11.23-.28.11c-1.28-.56-2.02-2.38-2.02-3.85c0-3.16 2.24-6.03 6.56-6.03c3.44 0 6.12 2.47 6.12 5.75c0 3.44-2.13 6.2-5.18 6.2c-.97 0-1.92-.52-2.26-1.13l-.67 2.37c-.23.86-.86 2.01-1.29 2.7v-.03z"/>
-                      </svg>
-                    </div>
-                    {/* Facebook */}
-                    <div className="flex size-9 items-center justify-center rounded-full bg-[#1877F2]">
-                      <svg className="size-5" viewBox="0 0 24 24" fill="white">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                      </svg>
-                    </div>
-                    {/* Snapchat */}
-                    <div className="flex size-9 items-center justify-center rounded-full bg-[#FFFC00]">
-                      <svg className="size-5" viewBox="0 0 24 24" fill="black">
-                        <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 4.791 4.014.255.044.435.27.42.509 0 .075-.015.149-.045.225-.24.569-1.273.988-3.146 1.271-.059.091-.12.375-.164.57-.029.179-.074.36-.134.553-.076.271-.27.405-.555.405h-.03c-.135 0-.313-.031-.538-.074-.36-.075-.765-.135-1.273-.135-.3 0-.599.015-.913.074-.6.104-1.123.464-1.723.884-.853.599-1.826 1.288-3.294 1.288-.06 0-.119-.015-.18-.015h-.149c-1.468 0-2.427-.675-3.279-1.288-.599-.42-1.107-.779-1.707-.884-.314-.045-.629-.074-.928-.074-.54 0-.958.089-1.272.149-.211.043-.391.074-.54.074-.374 0-.523-.224-.583-.42-.061-.192-.09-.389-.135-.567-.046-.181-.105-.494-.166-.57-1.918-.222-2.95-.642-3.189-1.226-.031-.063-.052-.12-.055-.18-.015-.226.156-.451.416-.495 3.236-.556 4.716-3.909 4.776-4.043l.017-.029c.164-.345.193-.645.104-.869-.195-.434-.884-.658-1.332-.809-.121-.029-.24-.074-.346-.119-1.107-.435-1.257-.93-1.197-1.273.09-.479.674-.793 1.168-.793.146 0 .27.029.383.074.42.194.789.3 1.104.3.234 0 .384-.06.465-.105l-.046-.569c-.098-1.626-.225-3.651.307-4.837C7.392 1.077 10.739.807 11.727.807l.419-.015h.06z"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          // OFFICIAL CONTACT
+          officialContactEmail={
+            officialEmail
+          }
+          officialContactPhone={
+            officialPhone
+          }
+          officialContactAddress={
+            officialAddress
+          }
+
+          // OFFICIAL SOCIAL
+          officialSocialLinks={links.map(
+            (link) => ({
+              platform:
+                link.platform as SocialLink["platform"],
+              username:
+                link.username,
+            }),
+          )}
+        />
       </div>
     </ResponsiveAppShell>
   )
